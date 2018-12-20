@@ -46,7 +46,7 @@ def get_playback_time(playback_duration):
         Eg: PT0H1M59.89S
     """
     # Get all the numbers in the string
-    numbers = re.split('[PTHMS]', playback_duration)
+    numbers = re.split('[PTHMS]', playback_duration)  # ['', '', '0', '9', '56.46', '']
     # remove all the empty strings
     numbers = [value for value in numbers if value != '']
     numbers.reverse()
@@ -115,8 +115,9 @@ def get_url_list(media, segment_duration,  playback_duration, bitrate):
     return media
 
 
-def read_mpd(mpd_file, dashplayback):
-    """ Module to read the MPD file"""
+def read_mpd(mpd_file, dashplayback): # filename , empty class
+    # print('In read mpd: '+mpd_file)
+    # """ Module to read the MPD file"""
     global FORMAT
     config_dash.LOG.info("Reading the MPD file")
     try:
@@ -126,13 +127,15 @@ def read_mpd(mpd_file, dashplayback):
         return None
     config_dash.JSON_HANDLE["video_metadata"] = {'mpd_file': mpd_file}
     root = tree.getroot()
+
     if 'MPD' in get_tag_name(root.tag).upper():
         if MEDIA_PRESENTATION_DURATION in root.attrib:
-            dashplayback.playback_duration = get_playback_time(root.attrib[MEDIA_PRESENTATION_DURATION])
+            dashplayback.playback_duration = get_playback_time(root.attrib[MEDIA_PRESENTATION_DURATION]) # record in seconds
             config_dash.JSON_HANDLE["video_metadata"]['playback_duration'] = dashplayback.playback_duration
         if MIN_BUFFER_TIME in root.attrib:
             dashplayback.min_buffer_time = get_playback_time(root.attrib[MIN_BUFFER_TIME])
     format = 0;
+    
     if "Period" in get_tag_name(root[0].tag):
         child_period = root[0]
         FORMAT = 0
@@ -183,9 +186,11 @@ def read_mpd(mpd_file, dashplayback):
                                         segment_info.attrib['timescale']))
                                     config_dash.LOG.debug("Segment Playback Duration = {}".format(video_segment_duration))
     elif FORMAT == 1: #differentFormat
-
+        
         for adaptation_set in child_period:
+            # print(adaptation_set[2].attrib)
             for representation in adaptation_set:
+                
                 media_found = False
                 #if 'audio' in representation.attrib['mimeType']:
                 #    media_object = dashplayback.audio

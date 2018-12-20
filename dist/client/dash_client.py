@@ -50,7 +50,7 @@ DOWNLOAD_CHUNK = 1024
 # Globals for arg parser with the default values
 # Not sure if this is the correct way ....
 MPD = None
-LIST = False
+LIST = False 
 PLAYBACK = DEFAULT_PLAYBACK
 DOWNLOAD = False
 SEGMENT_LIMIT = None
@@ -109,6 +109,7 @@ def get_domain_name(url):
     """
     parsed_uri = urlparse(url)
     domain = '{uri.scheme}://{uri.netloc}/'.format(uri=parsed_uri)
+     #Jerry
     return domain
 
 
@@ -513,14 +514,17 @@ def main():
         return None
     config_dash.LOG.info('Downloading MPD file %s' % MPD)
     # Retrieve the MPD files for the video
-    mpd_file = get_mpd(MPD)
+    mpd_file = get_mpd(MPD) # return MPD file name
     domain = get_domain_name(MPD)
     dp_object = DashPlayback()
     # Reading the MPD file created
+    # print('file: '+mpd_file)
     dp_object, video_segment_duration = read_mpd.read_mpd(mpd_file, dp_object)
+    # print(dp_object.video)
     
-
+    
     config_dash.LOG.info("The DASH media has %d video representations" % len(dp_object.video))
+    
     if LIST:
         # Print the representations and EXIT
         print_representations(dp_object)
