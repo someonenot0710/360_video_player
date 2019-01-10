@@ -225,10 +225,18 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
             dp_list[segment_count][bitrate] = segment_url
     bitrates = dp_object.video.keys()
     
+    # jerry_count=0
+    # 
+    # #Jerry
+    # if jerry_count==0:
+    #     print(bitrates)
+    # jerry_count+=1
+    # return None
+    
     bitrates = list(bitrates) #Jerry
     bitrates.sort()   #Jerry
 
-    #sorted(bitrates)   #Jerry
+    #sorted(bitrates)   # original Jerry 
     average_dwn_time = 0
     segment_files = []
     # For basic adaptation
@@ -518,33 +526,38 @@ def main():
     domain = get_domain_name(MPD)
     dp_object = DashPlayback()
     # Reading the MPD file created
-    # print('file: '+mpd_file)
+    print('file: '+mpd_file)
+    
+    # read_mpd.read_mpd(mpd_file, dp_object) # just test
+    # return None
+    
     dp_object, video_segment_duration = read_mpd.read_mpd(mpd_file, dp_object)
-    # print(dp_object.video)
-    
-    
-    config_dash.LOG.info("The DASH media has %d video representations" % len(dp_object.video))
-    
-    if LIST:
-        # Print the representations and EXIT
-        print_representations(dp_object)
-        return None
-    if "all" in PLAYBACK.lower():
-        if mpd_file:
-            config_dash.LOG.critical("Start ALL Parallel PLayback")
-            start_playback_all(dp_object, domain)
-    elif "basic" in PLAYBACK.lower():
-        config_dash.LOG.critical("Started Basic-DASH Playback")
-        start_playback_smart(dp_object, domain, "BASIC", DOWNLOAD, video_segment_duration)
-    elif "sara" in PLAYBACK.lower():
-        config_dash.LOG.critical("Started SARA-DASH Playback")
-        start_playback_smart(dp_object, domain, "SMART", DOWNLOAD, video_segment_duration)
-    elif "netflix" in PLAYBACK.lower():
-        config_dash.LOG.critical("Started Netflix-DASH Playback")
-        start_playback_smart(dp_object, domain, "NETFLIX", DOWNLOAD, video_segment_duration)
-    else:
-        config_dash.LOG.error("Unknown Playback parameter {}".format(PLAYBACK))
-        return None
-    
+    dp_object.video['medium']=dp_object.video['high']
+    print(dp_object.video['medium'].base_url)
+    # 
+    # 
+    # config_dash.LOG.info("The DASH media has %d video representations" % len(dp_object.video))
+    # 
+    # if LIST:
+    #     # Print the representations and EXIT
+    #     print_representations(dp_object)
+    #     return None
+    # if "all" in PLAYBACK.lower():
+    #     if mpd_file:
+    #         config_dash.LOG.critical("Start ALL Parallel PLayback")
+    #         start_playback_all(dp_object, domain)
+    # elif "basic" in PLAYBACK.lower():
+    #     config_dash.LOG.critical("Started Basic-DASH Playback")
+    #     start_playback_smart(dp_object, domain, "BASIC", DOWNLOAD, video_segment_duration)
+    # elif "sara" in PLAYBACK.lower():
+    #     config_dash.LOG.critical("Started SARA-DASH Playback")
+    #     start_playback_smart(dp_object, domain, "SMART", DOWNLOAD, video_segment_duration)
+    # elif "netflix" in PLAYBACK.lower():
+    #     config_dash.LOG.critical("Started Netflix-DASH Playback")
+    #     start_playback_smart(dp_object, domain, "NETFLIX", DOWNLOAD, video_segment_duration)
+    # else:
+    #     config_dash.LOG.error("Unknown Playback parameter {}".format(PLAYBACK))
+    #     return None
+    # 
 if __name__ == "__main__":
     sys.exit(main())

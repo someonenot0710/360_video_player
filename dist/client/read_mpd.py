@@ -186,64 +186,69 @@ def read_mpd(mpd_file, dashplayback): # filename , empty class
                                         segment_info.attrib['timescale']))
                                     config_dash.LOG.debug("Segment Playback Duration = {}".format(video_segment_duration))
     elif FORMAT == 1: #differentFormat
+    
+    
+        track_num=0 
+        init_mp4="" # initial_file
+        bandwidth = "high" #Jerry
+        media_object = dashplayback.video
+        media_object[bandwidth] = MediaObject()
+        media_object[bandwidth].track_name = []
+        media_object[bandwidth].track_size = []
+        media_object[bandwidth].segment_sizes = []
         
         for adaptation_set in child_period:
-            # print(adaptation_set[2].attrib)
-            for representation in adaptation_set:
-                
-                media_found = False
-                #if 'audio' in representation.attrib['mimeType']:
-                #    media_object = dashplayback.audio
-                #    media_found = False
-                #    config_dash.LOG.info("Found Audio")
-                if 'video' in representation.attrib['mimeType']:
-                    media_object = dashplayback.video
-                    media_found = True
-                    config_dash.LOG.info("Found Video")
-                if media_found:
-                    config_dash.LOG.info("Retrieving Media")
-                    config_dash.JSON_HANDLE["video_metadata"]['available_bitrates'] = list()
-                bandwidth = int(representation.attrib['bandwidth'])
-                config_dash.JSON_HANDLE["video_metadata"]['available_bitrates'].append(bandwidth)
-                media_object[bandwidth] = MediaObject()
-                media_object[bandwidth].segment_sizes = []
-                media_object[bandwidth].start = int(representation.attrib['startWithSAP'])
-                media_object[bandwidth].base_url = root[0].text
-                tempcut_url = root[0].text.split('/',3)[2:]
-                cut_url = tempcut_url[1]
-                print ("cut_url = {}".format(cut_url))
-                #print root[0].text
-                for segment_info in representation:
-                    if "SegmentBase" in get_tag_name(segment_info.tag):
-                        for init in segment_info:
-                            media_object[bandwidth].initialization = cut_url + init.attrib['sourceURL']
+  
+            track_num+=1
+            
+            if track_num==1:
+                init_mp4 = adaptation_set[0].attrib['initialization']
+                representation = adaptation_set[1]
+                # print(representation.attrib)
+            else:
+                representation = adaptation_set[0]
+                # print(representation.attrib)
+            # break;
+            media_found = False
 
-                    if 'video' in representation.attrib['mimeType']:
-                        if "SegmentList" in get_tag_name(segment_info.tag):
-                            video_segment_duration = (float(segment_info.attrib['duration']))
-                            config_dash.LOG.debug("Segment Playback Duration = {}".format(video_segment_duration))
-                            for segment_URL in segment_info:
-                                if "SegmentURL" in get_tag_name(segment_URL.tag):
-                                    try:
-                                        Ssize = segment_URL.attrib['media'].split('/')[0]
-                                        Ssize = Ssize.split('_')[-1];
-                                        Ssize = Ssize.split('kbit')[0];
-                                        #print "ssize"
-                                        #print Ssize
-                                        segment_size = float(Ssize) * float(
-                                            SIZE_DICT["Kbits"])
-                                    except (KeyError, e):
-                                        config_dash.LOG.error("Error in reading Segment sizes :{}".format(e))
-                                        continue
-                                    segurl = cut_url + segment_URL.attrib['media']
-                                    #print segurl
-                                    URL_LIST.append(segurl)
-                                    media_object[bandwidth].segment_sizes.append(segment_size)
+            if track_num==1:
+                config_dash.LOG.info("Retrieving Media")
+                config_dash.JSON_HANDLE["video_metadata"]['available_bitrates'] = list()
+                # config_dash.JSON_HANDLE["video_metadata"]['tile_number'] = list()
+            # bandwidth = int(representation.attrib['bandwidth']) # Original
+            bandwidth = "high" #Jerry
 
+            media_object[bandwidth].start = int(representation.attrib['startWithSAP'])
 
+            seg_size = []
+            seg_name = []
+            for segment_info in representation:
+                if "SegmentTemplate" in get_tag_name(segment_info.tag):
+                    media_object[bandwidth].base_url = segment_info.attrib['media']
+                    media_object[bandwidth].initialization = init_mp4
+                    video_segment_duration = video_segment_duration = (float(segment_info.attrib['duration'])/float(
+                                    segment_info.attrib['timescale']))
+                    config_dash.LOG.debug("Segment Playback Duration = {}".format(video_segment_duration))
+                if 'video' in representation.attrib['mimeType']:                        
+                    if "SegmentSize" in get_tag_name(segment_info.tag):
+                        try:
+                            segment_size = float(segment_info.attrib['size']) * float(
+                            SIZE_DICT[segment_info.attrib['scale']])
+                            seg_size.append(segment_size)
+                            seg_name.append(segment_info.attrib['id'])
+                        except (KeyError, e):
+                            config_dash.LOG.error("Error in reading Segment sizes :{}".format(e))
+                            continue
+
+                        media_object[bandwidth].track_size.append(seg_size)
+                        media_object[bandwidth].track_name.append(seg_name)
+            # print(video_segment_duration)
+            # break
+            
 
     else:
 
         print ("Error: UknownFormat of MPD file!")
 
     return dashplayback, int(video_segment_duration)
+    # return 0
