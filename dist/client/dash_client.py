@@ -56,6 +56,9 @@ DOWNLOAD = False
 SEGMENT_LIMIT = None
 
 
+dir_path='coaster_10x10/'
+
+
 class DashPlayback:
     """
     Audio[bandwidth] : {duration, url_list}
@@ -207,36 +210,38 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
     config_dash.LOG.info("The segments are stored in %s" % file_identifier)
     dp_list = defaultdict(defaultdict)
     # Creating a Dictionary of all that has the URLs for each segment and different bitrates
+    
+    
     for bitrate in dp_object.video:
         # Getting the URL list for each bitrate
         dp_object.video[bitrate] = read_mpd.get_url_list(dp_object.video[bitrate], video_segment_duration,
                                                          dp_object.playback_duration, bitrate)
 
-        if "$Bandwidth$" in dp_object.video[bitrate].initialization:
-            dp_object.video[bitrate].initialization = dp_object.video[bitrate].initialization.replace(
-                "$Bandwidth$", str(bitrate))
-        media_urls = [dp_object.video[bitrate].initialization] + dp_object.video[bitrate].url_list
+        # if "$Bandwidth$" in dp_object.video[bitrate].initialization:
+        #     dp_object.video[bitrate].initialization = dp_object.video[bitrate].initialization.replace(
+        #         "$Bandwidth$", str(bitrate))
+        # media_urls = [dp_object.video[bitrate].initialization] + dp_object.video[bitrate].url_list
+        media_urls = dp_object.video[bitrate].url_list
+
+        
         #print "media urls"
         #print media_urls
-        for segment_count, segment_url in enumerate(media_urls, dp_object.video[bitrate].start):
-            # segment_duration = dp_object.video[bitrate].segment_duration
-            #print "segment url"
-            #print segment_url
-            dp_list[segment_count][bitrate] = segment_url
-    bitrates = dp_object.video.keys()
-    
-    # jerry_count=0
-    # 
-    # #Jerry
-    # if jerry_count==0:
-    #     print(bitrates)
-    # jerry_count+=1
-    # return None
-    
+        # for segment_count, segment_url in enumerate(media_urls, dp_object.video[bitrate].start):
+        
+        for segment_count in range(1,int(dp_object.playback_duration/video_segment_duration)+1):
+            segment_url=[]
+            for track in range(0,len(media_urls)): # track numbers
+                segment_url.append(media_urls[track][segment_count-1])
+            
+            dp_list[segment_count][bitrate] = segment_url # segment_url = track_1_x~track_200_x  a segment_url represent a segment with # of track
+            # print(segment_url)
+            # return None
+            
+    bitrates = dp_object.video.keys() # ['high', 'medium', 'low']
     bitrates = list(bitrates) #Jerry
-    bitrates.sort()   #Jerry
+    bitrates.reverse() #['low','medium','high']
 
-    #sorted(bitrates)   # original Jerry 
+     
     average_dwn_time = 0
     segment_files = []
     # For basic adaptation
@@ -331,7 +336,15 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
         #print "current bitrate"
         #print current_bitrate
         #print segment_path
-        segment_url = urljoin(domain, segment_path)
+        
+        segment_url = []
+        for seg_path in segment_path:
+            req_url = domain+dir_path+seg_path
+            segment_url.append(req_url)
+        # segment_url = urljoin(domain, segment_path)
+        
+        # print(segment_url)
+         
         #print "segment url"
         #print segment_url
         config_dash.LOG.info("{}: Segment URL = {}".format(playback_type.upper(), segment_url))
@@ -350,6 +363,9 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
             #print file_identifier
             segment_size, segment_filename = download_segment(segment_url, file_identifier)
             config_dash.LOG.info("{}: Downloaded segment {}".format(playback_type.upper(), segment_url))
+            
+            return None # Jerry
+            
         except IOError as e: #Jerry
             config_dash.LOG.error("Unable to save segment %s" % e)
             return None
@@ -531,33 +547,46 @@ def main():
     # read_mpd.read_mpd(mpd_file, dp_object) # just test
     # return None
     
-    dp_object, video_segment_duration = read_mpd.read_mpd(mpd_file, dp_object)
-    dp_object.video['medium']=dp_object.video['high']
-    print(dp_object.video['medium'].base_url)
+    dp_object, video_segment_duration = read_mpd.read_mpd(mpd_file, dp_object,'high')
+    dp2 = DashPlayback()
+    dp3 = DashPlayback()
+    dp2, video_segment_duration = read_mpd.read_mpd('dash_coaster_10x10_qp32_new.mpd', dp2,'medium')
+    dp3, video_segment_duration = read_mpd.read_mpd('dash_coaster_10x10_qp36_new.mpd', dp3,'low')
+    
+    dp_object.video['medium'] = dp2.video['medium']
+    dp_object.video['low']=dp3.video['low']
+    
+    
+    # print(dp_object.video['high'].base_url)
+    # # print(dp_object.video['high'].track_name[2])
+    # print(dp_object.video['medium'].base_url)
+    # print(dp_object.video['low'].track_name[2])
+    # dp_object.video['medium']=dp_object.video['high']
+    # print(dp_object.video['medium'].base_url)
     # 
     # 
-    # config_dash.LOG.info("The DASH media has %d video representations" % len(dp_object.video))
-    # 
-    # if LIST:
-    #     # Print the representations and EXIT
-    #     print_representations(dp_object)
-    #     return None
-    # if "all" in PLAYBACK.lower():
-    #     if mpd_file:
-    #         config_dash.LOG.critical("Start ALL Parallel PLayback")
-    #         start_playback_all(dp_object, domain)
-    # elif "basic" in PLAYBACK.lower():
-    #     config_dash.LOG.critical("Started Basic-DASH Playback")
-    #     start_playback_smart(dp_object, domain, "BASIC", DOWNLOAD, video_segment_duration)
-    # elif "sara" in PLAYBACK.lower():
-    #     config_dash.LOG.critical("Started SARA-DASH Playback")
-    #     start_playback_smart(dp_object, domain, "SMART", DOWNLOAD, video_segment_duration)
-    # elif "netflix" in PLAYBACK.lower():
-    #     config_dash.LOG.critical("Started Netflix-DASH Playback")
-    #     start_playback_smart(dp_object, domain, "NETFLIX", DOWNLOAD, video_segment_duration)
-    # else:
-    #     config_dash.LOG.error("Unknown Playback parameter {}".format(PLAYBACK))
-    #     return None
+    config_dash.LOG.info("The DASH media has %d video representations" % len(dp_object.video))
+    
+    if LIST:
+        # Print the representations and EXIT
+        print_representations(dp_object)
+        return None
+    if "all" in PLAYBACK.lower():
+        if mpd_file:
+            config_dash.LOG.critical("Start ALL Parallel PLayback")
+            start_playback_all(dp_object, domain)
+    elif "basic" in PLAYBACK.lower():
+        config_dash.LOG.critical("Started Basic-DASH Playback")
+        start_playback_smart(dp_object, domain, "BASIC", DOWNLOAD, video_segment_duration)
+    elif "sara" in PLAYBACK.lower():
+        config_dash.LOG.critical("Started SARA-DASH Playback")
+        start_playback_smart(dp_object, domain, "SMART", DOWNLOAD, video_segment_duration)
+    elif "netflix" in PLAYBACK.lower():
+        config_dash.LOG.critical("Started Netflix-DASH Playback")
+        start_playback_smart(dp_object, domain, "NETFLIX", DOWNLOAD, video_segment_duration)
+    else:
+        config_dash.LOG.error("Unknown Playback parameter {}".format(PLAYBACK))
+        return None
     # 
 if __name__ == "__main__":
     sys.exit(main())

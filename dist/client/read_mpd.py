@@ -9,6 +9,7 @@ import config_dash
 
 FORMAT = 0
 URL_LIST = list()
+URL_LIST_dict = dict()
 # Dictionary to convert size to bits
 SIZE_DICT = {'bits':   1,
              'Kbits':  1024,
@@ -110,12 +111,14 @@ def get_url_list(media, segment_duration,  playback_duration, bitrate):
                 break
             total_playback += segment_duration
     elif FORMAT == 1:
-        media.url_list = URL_LIST
+        # media.url_list = URL_LIST
+        media.url_list = URL_LIST_dict[bitrate] #Jerry
+        
     #print media.url_list
     return media
 
 
-def read_mpd(mpd_file, dashplayback): # filename , empty class
+def read_mpd(mpd_file, dashplayback,bandwidth): # filename , empty class
     # print('In read mpd: '+mpd_file)
     # """ Module to read the MPD file"""
     global FORMAT
@@ -190,7 +193,7 @@ def read_mpd(mpd_file, dashplayback): # filename , empty class
     
         track_num=0 
         init_mp4="" # initial_file
-        bandwidth = "high" #Jerry
+        # bandwidth = "high" #Jerry
         media_object = dashplayback.video
         media_object[bandwidth] = MediaObject()
         media_object[bandwidth].track_name = []
@@ -216,7 +219,7 @@ def read_mpd(mpd_file, dashplayback): # filename , empty class
                 config_dash.JSON_HANDLE["video_metadata"]['available_bitrates'] = list()
                 # config_dash.JSON_HANDLE["video_metadata"]['tile_number'] = list()
             # bandwidth = int(representation.attrib['bandwidth']) # Original
-            bandwidth = "high" #Jerry
+            # bandwidth = "high" #Jerry
 
             media_object[bandwidth].start = int(representation.attrib['startWithSAP'])
 
@@ -236,12 +239,14 @@ def read_mpd(mpd_file, dashplayback): # filename , empty class
                             SIZE_DICT[segment_info.attrib['scale']])
                             seg_size.append(segment_size)
                             seg_name.append(segment_info.attrib['id'])
+                            # print(segment_info.attrib['id'])
                         except (KeyError, e):
                             config_dash.LOG.error("Error in reading Segment sizes :{}".format(e))
                             continue
 
-                        media_object[bandwidth].track_size.append(seg_size)
-                        media_object[bandwidth].track_name.append(seg_name)
+            media_object[bandwidth].track_size.append(seg_size)
+            media_object[bandwidth].track_name.append(seg_name)
+        URL_LIST_dict[bandwidth] = media_object[bandwidth].track_name #Jerry
             # print(video_segment_duration)
             # break
             
