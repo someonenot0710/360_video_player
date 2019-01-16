@@ -126,7 +126,14 @@ def id_generator(id_size=6):
 def download_segment(segment_url, dash_folder):
     """ Module to download the segment """
     try:
-        connection = urllib.request.urlopen(segment_url) #Jerry
+        quic_file = open("/home/jerry/Desktop/for_quic/quic.txt","a")
+        
+        for url in segment_url:
+            quic_file.write(str(url)+"\n")
+        quic_file.close()
+        return None
+        # connection = urllib.request.urlopen(segment_url) #Jerry
+        
     except urllib.error.HTTPError as error: #Jerry
         config_dash.LOG.error("Unable to download DASH Segment {} HTTP Error:{} ".format(segment_url, str(error.code)))
         return None
