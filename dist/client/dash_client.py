@@ -126,13 +126,14 @@ def id_generator(id_size=6):
 def download_segment(segment_url, dash_folder):
     """ Module to download the segment """
     try:
-        quic_file = open("/home/jerry/Desktop/for_quic/quic.txt","a")
         
+        # quic_file = open("/home/jerry/Desktop/for_quic/quic.txt","a")
+        quic_file = open("./quic_file.txt","a")
         for url in segment_url:
-            str(url).replace("140.114.77.125","www.example.org")
-            quic_file.write(str(url)+"\n")
+            url_new=str(url).replace("140.114.77.125","www.example.org")
+            quic_file.write(str(url_new)+"\n")
         quic_file.close()
-        return None
+        return 0,None
         # connection = urllib.request.urlopen(segment_url) #Jerry
         
     except urllib.error.HTTPError as error: #Jerry
@@ -355,7 +356,7 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
          
         #print "segment url"
         #print segment_url
-        config_dash.LOG.info("{}: Segment URL = {}".format(playback_type.upper(), segment_url))
+        # config_dash.LOG.info("{}: Segment URL = {}".format(playback_type.upper(), segment_url)) //Jerry
         if delay:
             delay_start = time.time()
             config_dash.LOG.info("SLEEPING for {}seconds ".format(delay*segment_duration))
@@ -370,7 +371,8 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
             #print 'file'
             #print file_identifier
             segment_size, segment_filename = download_segment(segment_url, file_identifier)
-            config_dash.LOG.info("{}: Downloaded segment {}".format(playback_type.upper(), segment_url))
+            
+            # config_dash.LOG.info("{}: Downloaded segment {}".format(playback_type.upper(), segment_url))
             
             return None # Jerry
             
