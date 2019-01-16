@@ -129,6 +129,7 @@ def download_segment(segment_url, dash_folder):
         quic_file = open("/home/jerry/Desktop/for_quic/quic.txt","a")
         
         for url in segment_url:
+            str(url).replace("140.114.77.125","www.example.org")
             quic_file.write(str(url)+"\n")
         quic_file.close()
         return None
