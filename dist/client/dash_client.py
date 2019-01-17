@@ -123,7 +123,7 @@ def id_generator(id_size=6):
     return 'TEMP_' + ''.join(random.choice(ascii_letters+digits) for _ in range(id_size))
 
 
-def download_segment(segment_url, dash_folder):
+def download_segment(segment_url, dash_folder, segment_size):
     """ Module to download the segment """
     try:
         
@@ -133,12 +133,29 @@ def download_segment(segment_url, dash_folder):
             url_new=str(url).replace("140.114.77.125","www.example.org")
             quic_file.write(str(url_new)+"\n")
         quic_file.close()
-        return 0,None
+        
+        ## for request quic server
+#         for num in range(0,len(segment_url)-1):
+# #        for url in segment_url[-1]:
+#             url = str(segment_url[num])
+#             url_new=str(url).replace("140.114.77.125/coaster_10x10","www.example.org")
+#             url_new=url_new.replace("http","https")
+#             quic_file.write(str(url_new)+"\n")
+#         quic_file.close()        
+        ##
+        
+        # print(segment_url[0])
+        # print(segment_size[0])
+        s_size = sum(segment_size)
+        # print(s_size)
+        return s_size,segment_url[0]
+        # return 0,None
         # connection = urllib.request.urlopen(segment_url) #Jerry
         
     except urllib.error.HTTPError as error: #Jerry
         config_dash.LOG.error("Unable to download DASH Segment {} HTTP Error:{} ".format(segment_url, str(error.code)))
         return None
+    
     parsed_uri = urlparse(segment_url)
     segment_path = '{uri.path}'.format(uri=parsed_uri)
     while segment_path.startswith('/'):
@@ -219,18 +236,21 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
     config_dash.LOG.info("The segments are stored in %s" % file_identifier)
     dp_list = defaultdict(defaultdict)
     # Creating a Dictionary of all that has the URLs for each segment and different bitrates
+    dp_size = defaultdict(defaultdict) # Jerry for segment size
     
     
     for bitrate in dp_object.video:
         # Getting the URL list for each bitrate
         dp_object.video[bitrate] = read_mpd.get_url_list(dp_object.video[bitrate], video_segment_duration,
                                                          dp_object.playback_duration, bitrate)
-
+                                                         
+        
         # if "$Bandwidth$" in dp_object.video[bitrate].initialization:
         #     dp_object.video[bitrate].initialization = dp_object.video[bitrate].initialization.replace(
         #         "$Bandwidth$", str(bitrate))
         # media_urls = [dp_object.video[bitrate].initialization] + dp_object.video[bitrate].url_list
         media_urls = dp_object.video[bitrate].url_list
+        media_size = dp_object.video[bitrate].url_size
 
         
         #print "media urls"
@@ -239,10 +259,12 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
         
         for segment_count in range(1,int(dp_object.playback_duration/video_segment_duration)+1):
             segment_url=[]
+            segment_size=[]
             for track in range(0,len(media_urls)): # track numbers
                 segment_url.append(media_urls[track][segment_count-1])
-            
+                segment_size.append(media_size[track][segment_count-1])
             dp_list[segment_count][bitrate] = segment_url # segment_url = track_1_x~track_200_x  a segment_url represent a segment with # of track
+            dp_size[segment_count][bitrate] = segment_size
             # print(segment_url)
             # return None
             
@@ -323,7 +345,7 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
                             bitrates, dash_player, segment_download_rate, current_bitrate, average_segment_sizes,
                             netflix_rate_map, netflix_state)
                         config_dash.LOG.info("NETFLIX: Next bitrate = {}".format(current_bitrate))
-                    except (IndexError, e):
+                    except IndexError as e:
                         config_dash.LOG.error(e)
                 else:
                     config_dash.LOG.critical("Completed segment playback for Netflix")
@@ -338,6 +360,7 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
                 current_bitrate, average_dwn_time = basic_dash.basic_dash(segment_number, bitrates, average_dwn_time,
                                                                           segment_download_time, current_bitrate)
         segment_path = dp_list[segment][current_bitrate]
+        segment_size = dp_size[segment][current_bitrate]
         #print   "domain"
         #print domain
         #print "segment"
@@ -370,11 +393,11 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
             #print segment_url
             #print 'file'
             #print file_identifier
-            segment_size, segment_filename = download_segment(segment_url, file_identifier)
+            segment_size, segment_filename = download_segment(segment_url, file_identifier, segment_size)
             
             # config_dash.LOG.info("{}: Downloaded segment {}".format(playback_type.upper(), segment_url))
             
-            return None # Jerry
+            # return None # Jerry
             
         except IOError as e: #Jerry
             config_dash.LOG.error("Unable to save segment %s" % e)
@@ -383,7 +406,8 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
         previous_segment_times.append(segment_download_time)
         recent_download_sizes.append(segment_size)
         # Updating the JSON information
-        segment_name = os.path.split(segment_url)[1]
+        # segment_name = os.path.split(segment_url)[1] # Original
+        segment_name = segment_filename
         if "segment_info" not in config_dash.JSON_HANDLE:
             config_dash.JSON_HANDLE["segment_info"] = list()
         config_dash.JSON_HANDLE["segment_info"].append((segment_name, current_bitrate, segment_size,
@@ -557,14 +581,14 @@ def main():
     # read_mpd.read_mpd(mpd_file, dp_object) # just test
     # return None
     
-    dp_object, video_segment_duration = read_mpd.read_mpd(mpd_file, dp_object,'high')
+    dp_object, video_segment_duration = read_mpd.read_mpd(mpd_file, dp_object,'3') # 3 high  2 medium   1 low
     dp2 = DashPlayback()
     dp3 = DashPlayback()
-    dp2, video_segment_duration = read_mpd.read_mpd('dash_coaster_10x10_qp32_new.mpd', dp2,'medium')
-    dp3, video_segment_duration = read_mpd.read_mpd('dash_coaster_10x10_qp36_new.mpd', dp3,'low')
+    dp2, video_segment_duration = read_mpd.read_mpd('dash_coaster_10x10_qp32_new.mpd', dp2,'2')
+    dp3, video_segment_duration = read_mpd.read_mpd('dash_coaster_10x10_qp36_new.mpd', dp3,'1')
     
-    dp_object.video['medium'] = dp2.video['medium']
-    dp_object.video['low']=dp3.video['low']
+    dp_object.video['2'] = dp2.video['2']
+    dp_object.video['1']=dp3.video['1']
     
     
     # print(dp_object.video['high'].base_url)

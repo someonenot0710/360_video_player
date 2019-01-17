@@ -10,6 +10,7 @@ import config_dash
 FORMAT = 0
 URL_LIST = list()
 URL_LIST_dict = dict()
+URL_SIZE_dict = dict() #Jerry for segment size
 # Dictionary to convert size to bits
 SIZE_DICT = {'bits':   1,
              'Kbits':  1024,
@@ -113,11 +114,11 @@ def get_url_list(media, segment_duration,  playback_duration, bitrate):
     elif FORMAT == 1:
         # media.url_list = URL_LIST
         media.url_list = URL_LIST_dict[bitrate] #Jerry
+        media.url_size = URL_SIZE_dict[bitrate]
         
     #print media.url_list
     return media
-
-
+        
 def read_mpd(mpd_file, dashplayback,bandwidth): # filename , empty class
     # print('In read mpd: '+mpd_file)
     # """ Module to read the MPD file"""
@@ -247,6 +248,7 @@ def read_mpd(mpd_file, dashplayback,bandwidth): # filename , empty class
             media_object[bandwidth].track_size.append(seg_size)
             media_object[bandwidth].track_name.append(seg_name)
         URL_LIST_dict[bandwidth] = media_object[bandwidth].track_name #Jerry
+        URL_SIZE_dict[bandwidth] = media_object[bandwidth].track_size
             # print(video_segment_duration)
             # break
             
