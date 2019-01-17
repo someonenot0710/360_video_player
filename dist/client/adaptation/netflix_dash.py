@@ -81,6 +81,7 @@ def netflix_dash(bitrates, dash_player, segment_download_rate, curr_bitrate, ave
     Netflix rate adaptation module
     """
     available_video_segments = dash_player.buffer.qsize() - dash_player.initial_buffer
+    print("available_video_segments-------------------------:   " +str(available_video_segments))
     if not (curr_bitrate or rate_map or state):
         rate_map = get_rate_map(bitrates)
         state = "INITIAL"
@@ -93,15 +94,21 @@ def netflix_dash(bitrates, dash_player, segment_download_rate, curr_bitrate, ave
         delta_B = dash_player.segment_duration - average_segment_sizes[curr_bitrate]/segment_download_rate
         # Select the higher bitrate as long as delta B > 0.875 * V
         if delta_B > config_dash.NETFLIX_INITIAL_FACTOR * dash_player.segment_duration:
-            next_bitrate = bitrates[bitrates.index(curr_bitrate)+1]
+            ### Jerry add
+            if bitrates.index(curr_bitrate) == len(bitrates)-1:
+                next_bitrate = curr_bitrate
+            ## add    
+            else :
+                next_bitrate = bitrates[bitrates.index(curr_bitrate)+1]
         # if the current buffer occupancy is less that NETFLIX_INITIAL_BUFFER, then do NOY use rate map
         if not available_video_segments < config_dash.NETFLIX_INITIAL_BUFFER:
-
             # get the next bitrate based on the ratemap
+            
             rate_map_next_bitrate = get_rate_netflix(bitrates, available_video_segments,
                                                      config_dash.NETFLIX_BUFFER_SIZE, rate_map)
             # Consider the rate map only if the rate map gives a higher value.
             # Once the rate mao returns a higher value exit the 'INITIAL' stage
+            print("rate_map_next_bitrate------------: "+str(rate_map_next_bitrate)+'---------: '+str(next_bitrate))
             if rate_map_next_bitrate > next_bitrate:
                 next_bitrate = rate_map_next_bitrate
                 state = "RUNNING"

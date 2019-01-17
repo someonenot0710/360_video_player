@@ -61,7 +61,7 @@ BASIC_DELTA_COUNT = 5
 # Number of segments for moving weighted average
 SARA_SAMPLE_COUNT = 5
 # Constants for the Buffer in the Weighted adaptation scheme (in segments)
-INITIAL_BUFFERING_COUNT = 1
+INITIAL_BUFFERING_COUNT = 1 # original 1
 RE_BUFFERING_COUNT = 1
 ALPHA_BUFFER_COUNT = 5
 BETA_BUFFER_COUNT = 10

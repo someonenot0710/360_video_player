@@ -126,12 +126,15 @@ def id_generator(id_size=6):
 def download_segment(segment_url, dash_folder, segment_size):
     """ Module to download the segment """
     try:
-        
+        count=0
         # quic_file = open("/home/jerry/Desktop/for_quic/quic.txt","a")
         quic_file = open("./quic_file.txt","a")
         for url in segment_url:
             url_new=str(url).replace("140.114.77.125","www.example.org")
             quic_file.write(str(url_new)+"\n")
+            count+=1
+            if count > 40:
+                break
         quic_file.close()
         
         ## for request quic server
@@ -265,6 +268,7 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
                 segment_size.append(media_size[track][segment_count-1])
             dp_list[segment_count][bitrate] = segment_url # segment_url = track_1_x~track_200_x  a segment_url represent a segment with # of track
             dp_size[segment_count][bitrate] = segment_size
+            
             # print(segment_url)
             # return None
             
@@ -334,8 +338,8 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
                 config_dash.LOG.info("Playback is NETFLIX")
                 # Calculate the average segment sizes for each bitrate
                 if not average_segment_sizes:
-                    average_segment_sizes = get_average_segment_sizes(dp_object)
-                if segment_number < len(dp_list) - 1 + dp_object.video[bitrate].start:
+                    average_segment_sizes = get_average_segment_sizes(dp_object) # change get_average_segment_sizes
+                if segment_number <= len(dp_list) - 1 + dp_object.video[bitrate].start: # Original < Jerry
                     try:
                         if segment_size and segment_download_time:
                             segment_download_rate = segment_size / segment_download_time
@@ -347,6 +351,7 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
                         config_dash.LOG.info("NETFLIX: Next bitrate = {}".format(current_bitrate))
                     except IndexError as e:
                         config_dash.LOG.error(e)
+                        return None
                 else:
                     config_dash.LOG.critical("Completed segment playback for Netflix")
                     break
@@ -361,13 +366,9 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
                                                                           segment_download_time, current_bitrate)
         segment_path = dp_list[segment][current_bitrate]
         segment_size = dp_size[segment][current_bitrate]
-        #print   "domain"
-        #print domain
-        #print "segment"
-        #print segment
-        #print "current bitrate"
-        #print current_bitrate
-        #print segment_path
+        
+        
+        
         
         segment_url = []
         for seg_path in segment_path:
@@ -398,10 +399,11 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
             # config_dash.LOG.info("{}: Downloaded segment {}".format(playback_type.upper(), segment_url))
             
             # return None # Jerry
-            
+        
         except IOError as e: #Jerry
             config_dash.LOG.error("Unable to save segment %s" % e)
             return None
+               
         segment_download_time = timeit.default_timer() - start_time
         previous_segment_times.append(segment_download_time)
         recent_download_sizes.append(segment_size)
@@ -419,27 +421,40 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
         if playback_type.upper() == "SMART" and weighted_mean_object:
             weighted_mean_object.update_weighted_mean(segment_size, segment_download_time)
 
+        
+        
+        
         segment_info = {'playback_length': video_segment_duration,
                         'size': segment_size,
                         'bitrate': current_bitrate,
                         'data': segment_filename,
-                        'URI': segment_url,
+                        'URI': segment_url[0],
                         'segment_number': segment_number}
+                        
+        # print('-------------------------------')
+        # print(segment_info)
+        
         segment_duration = segment_info['playback_length']
         dash_player.write(segment_info)
+        # print('------------------------+++++++:  '+str(dash_player.buffer.qsize()))
+        
         segment_files.append(segment_filename)
-        config_dash.LOG.info("Downloaded %s. Size = %s in %s seconds" % (
-            segment_url, segment_size, str(segment_download_time)))
+        
+        # config_dash.LOG.info("Downloaded %s. Size = %s in %s seconds" % (
+        #     segment_url, segment_size, str(segment_download_time)))
+        
         if previous_bitrate:
-            if previous_bitrate < current_bitrate:
+            if int(previous_bitrate) < int(current_bitrate):
                 config_dash.JSON_HANDLE['playback_info']['up_shifts'] += 1
-            elif previous_bitrate > current_bitrate:
+            elif int(previous_bitrate) > int(current_bitrate):
                 config_dash.JSON_HANDLE['playback_info']['down_shifts'] += 1
             previous_bitrate = current_bitrate
 
     # waiting for the player to finish playing
     while dash_player.playback_state not in dash_buffer.EXIT_STATES:
         time.sleep(1)
+        if dash_player.playback_timer.time()>= dp_object.playback_duration:
+            break
     write_json()
     if not download:
         clean_files(file_identifier)
@@ -464,8 +479,10 @@ def get_average_segment_sizes(dp_object):
     """
     average_segment_sizes = dict()
     for bitrate in dp_object.video:
-        segment_sizes = dp_object.video[bitrate].segment_sizes
-        segment_sizes = [float(i) for i in segment_sizes]
+        # segment_sizes = dp_object.video[bitrate].segment_sizes
+        # segment_sizes = [float(i) for i in segment_sizes]
+        segment_sizes = dp_object.video[bitrate].url_size
+        segment_sizes = [float(sum(i)) for i in segment_sizes]
         try:
             average_segment_sizes[bitrate] = sum(segment_sizes)/len(segment_sizes)
         except ZeroDivisionError:
@@ -581,7 +598,7 @@ def main():
     # read_mpd.read_mpd(mpd_file, dp_object) # just test
     # return None
     
-    dp_object, video_segment_duration = read_mpd.read_mpd(mpd_file, dp_object,'3') # 3 high  2 medium   1 low
+    dp_object, video_segment_duration = read_mpd.read_mpd(mpd_file, dp_object,3) # 3 high  2 medium   1 low
     dp2 = DashPlayback()
     dp3 = DashPlayback()
     dp2, video_segment_duration = read_mpd.read_mpd('dash_coaster_10x10_qp32_new.mpd', dp2,'2')
@@ -589,6 +606,7 @@ def main():
     
     dp_object.video['2'] = dp2.video['2']
     dp_object.video['1']=dp3.video['1']
+    
     
     
     # print(dp_object.video['high'].base_url)
