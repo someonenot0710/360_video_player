@@ -137,7 +137,8 @@ class DashPlayer:
                 else:
                     config_dash.LOG.info("Initial Waiting Time = {}".format(initial_wait))
                     config_dash.JSON_HANDLE['playback_info']['initial_buffering_duration'] = initial_wait
-                    config_dash.JSON_HANDLE['playback_info']['start_time'] = time.time()
+#                    config_dash.JSON_HANDLE['playback_info']['start_time'] = time.time()
+                    config_dash.JSON_HANDLE['playback_info']['start_time']=time.asctime( time.localtime(time.time()))
                     self.set_state("PLAY")
                     self.log_entry("InitialBuffering-Play")
 

@@ -128,6 +128,7 @@ def download_segment(segment_url, dash_folder, segment_size):
     try:
         count=0
         # quic_file = open("/home/jerry/Desktop/for_quic/quic.txt","a")
+        '''
         quic_file = open("./quic_file.txt","a")
         for url in segment_url:
             url_new=str(url).replace("140.114.77.125","www.example.org")
@@ -136,15 +137,17 @@ def download_segment(segment_url, dash_folder, segment_size):
             if count > 40:
                 break
         quic_file.close()
-        
+        '''
         ## for request quic server
-#         for num in range(0,len(segment_url)-1):
-# #        for url in segment_url[-1]:
-#             url = str(segment_url[num])
-#             url_new=str(url).replace("140.114.77.125/coaster_10x10","www.example.org")
-#             url_new=url_new.replace("http","https")
-#             quic_file.write(str(url_new)+"\n")
-#         quic_file.close()        
+        quic_file = open("/home/jerry/Desktop/for_quic/quic.txt","a")
+        for num in range(0,len(segment_url)-1):
+            url = str(segment_url[num])
+            url_new=str(url).replace("140.114.77.125/coaster_10x10","www.example.org")
+            url_new=url_new.replace("http","https")
+            quic_file.write(str(url_new)+"\n")
+            if num>50:
+                break
+        quic_file.close()        
         ##
         
         # print(segment_url[0])
@@ -421,8 +424,18 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
         if playback_type.upper() == "SMART" and weighted_mean_object:
             weighted_mean_object.update_weighted_mean(segment_size, segment_download_time)
 
-        
-        
+        tt = [name.split('/')[-1] for name in segment_url]
+#        print(segment_url[0:52].split('/')[-1])
+#        print(tt[0:52])
+               
+        d_file_name=[]
+        while not set(tt[0:52]).issubset(set(d_file_name)) :
+            d_file_name=[]
+            d_regular = open("/home/jerry/Desktop/for_quic/log.txt")
+            for i, line in enumerate(d_regular):
+                d_file_name.append(line.rstrip('\n'))
+#            print(d_file_name)        
+            d_regular.close()
         
         segment_info = {'playback_length': video_segment_duration,
                         'size': segment_size,
@@ -454,7 +467,9 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
     while dash_player.playback_state not in dash_buffer.EXIT_STATES:
         time.sleep(1)
         if dash_player.playback_timer.time()>= dp_object.playback_duration:
+            #playback_state.playback_state="END"
             break
+
     write_json()
     if not download:
         clean_files(file_identifier)
