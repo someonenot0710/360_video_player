@@ -36,6 +36,7 @@ import config_dash
 import dash_buffer
 from configure_log_file import configure_log_file, write_json
 import time
+import re
 '''
 try:
     WindowsError
@@ -126,28 +127,22 @@ def id_generator(id_size=6):
 def download_segment(segment_url, dash_folder, segment_size):
     """ Module to download the segment """
     try:
-        count=0
-        # quic_file = open("/home/jerry/Desktop/for_quic/quic.txt","a")
-        '''
         quic_file = open("./quic_file.txt","a")
         for url in segment_url:
             url_new=str(url).replace("140.114.77.125","www.example.org")
             quic_file.write(str(url_new)+"\n")
-            count+=1
-            if count > 40:
-                break
         quic_file.close()
-        '''
+        
         ## for request quic server
-        quic_file = open("/home/jerry/Desktop/for_quic/quic.txt","a")
-        for num in range(0,len(segment_url)-1):
-            url = str(segment_url[num])
-            url_new=str(url).replace("140.114.77.125/coaster_10x10","www.example.org")
-            url_new=url_new.replace("http","https")
-            quic_file.write(str(url_new)+"\n")
-            if num>50:
-                break
-        quic_file.close()        
+        # quic_file = open("/home/jerry/Desktop/for_quic/quic.txt","a")
+        # for num in range(0,len(segment_url)-1):
+        #     url = str(segment_url[num])
+        #     url_new=str(url).replace("140.114.77.125/coaster_10x10","www.example.org")
+        #     url_new=url_new.replace("http","https")
+        #     quic_file.write(str(url_new)+"\n")
+        #     if num>50:
+        #         break
+        # quic_file.close()        
         ##
         
         # print(segment_url[0])
@@ -297,6 +292,23 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
     average_segment_sizes = netflix_rate_map = None
     netflix_state = "INITIAL"
     # Start playback of all the segments
+    
+    
+    ## Read tiles that need to request //Jerry
+    current_file_name = "compare_tile/coaster_10x10_user07_segtile_1"
+    cur = open(current_file_name)
+    cur_original = cur.read().splitlines()
+    cur_predict = [re.split(', | |\n',line)[:-1] for line in cur_original]
+    patch = dict()
+    for line in cur_predict:
+        segment_number = int(re.split('_| ',line[0])[-1]) # 1 ~ 60
+        patch[segment_number]=list()
+        for i in range(1,len(line)):
+            if float(line[i])==1:
+                patch[segment_number].append(i)
+    ###
+    
+    
     for segment_number, segment in enumerate(dp_list, dp_object.video[current_bitrate].start):
         config_dash.LOG.info(" {}: Processing the segment {}".format(playback_type.upper(), segment_number))
         write_json()
@@ -377,6 +389,15 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
         for seg_path in segment_path:
             req_url = domain+dir_path+seg_path
             segment_url.append(req_url)
+        
+        ## only get current predict
+        regular_url = []
+        for number in patch[segment]:
+            regular_url.append(segment_url[int(number)-1])
+            
+            
+        # print(regular_url)
+        # return None
         # segment_url = urljoin(domain, segment_path)
         
         # print(segment_url)
@@ -393,11 +414,7 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
             config_dash.LOG.debug("SLEPT for {}seconds ".format(time.time() - delay_start))
         start_time = timeit.default_timer()
         try:
-            #print 'url'
-            #print segment_url
-            #print 'file'
-            #print file_identifier
-            segment_size, segment_filename = download_segment(segment_url, file_identifier, segment_size)
+            segment_size, segment_filename = download_segment(regular_url, file_identifier, segment_size)
             
             # config_dash.LOG.info("{}: Downloaded segment {}".format(playback_type.upper(), segment_url))
             
@@ -406,7 +423,8 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
         except IOError as e: #Jerry
             config_dash.LOG.error("Unable to save segment %s" % e)
             return None
-               
+
+            
         segment_download_time = timeit.default_timer() - start_time
         previous_segment_times.append(segment_download_time)
         recent_download_sizes.append(segment_size)
@@ -425,17 +443,18 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
             weighted_mean_object.update_weighted_mean(segment_size, segment_download_time)
 
         tt = [name.split('/')[-1] for name in segment_url]
-#        print(segment_url[0:52].split('/')[-1])
-#        print(tt[0:52])
-               
+
+        ## for Server
+        '''
         d_file_name=[]
         while not set(tt[0:52]).issubset(set(d_file_name)) :
             d_file_name=[]
             d_regular = open("/home/jerry/Desktop/for_quic/log.txt")
             for i, line in enumerate(d_regular):
-                d_file_name.append(line.rstrip('\n'))
-#            print(d_file_name)        
+                d_file_name.append(line.rstrip('\n'))  
             d_regular.close()
+        '''
+        ###
         
         segment_info = {'playback_length': video_segment_duration,
                         'size': segment_size,
