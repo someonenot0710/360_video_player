@@ -37,6 +37,7 @@ import dash_buffer
 from configure_log_file import configure_log_file, write_json
 import time
 import re
+import threading
 '''
 try:
     WindowsError
@@ -127,14 +128,14 @@ def id_generator(id_size=6):
 def download_segment(segment_url, dash_folder, segment_size):
     """ Module to download the segment """
     try:
-        ''' 
+        
         quic_file = open("./quic_file.txt","a")
         for url in segment_url:
             url_new=str(url).replace("140.114.77.125","www.example.org")
             quic_file.write(str(url_new)+"\n")
         quic_file.close()
-        '''
         
+        '''
         ## for request quic server
         quic_file = open("/home/jerry/Desktop/for_quic/quic.txt","a")
         for num in range(0,len(segment_url)):
@@ -144,7 +145,7 @@ def download_segment(segment_url, dash_folder, segment_size):
             quic_file.write(str(url_new)+"\n")
         quic_file.close()        
         ##
-        
+        '''
         s_size = sum(segment_size)
         return s_size,segment_url[0]
 
@@ -209,7 +210,86 @@ def print_representations(dp_object):
     for bandwidth in dp_object.video:
         print (bandwidth)
 
+def download_patch_segment(segment_url):
+    """ Module to download the segment """
+    try:
+        '''
+        quic_file = open("./quic_patch_file.txt","a")
+        for url in segment_url:
+            url_new=str(url).replace("140.114.77.125","www.example.org")
+            quic_file.write(str(url_new)+"\n")
+        quic_file.close()
+        '''
+        
+        ## for request quic server
+        quic_file = open("/home/jerry/Desktop/for_quic/quic_patch.txt","a")
+        for num in range(0,len(segment_url)):
+            url = str(segment_url[num])
+            url_new=str(url).replace("140.114.77.125/coaster_10x10","www.example.org")
+            url_new=url_new.replace("http","https")
+            quic_file.write(str(url_new)+"\n")
+        quic_file.close()        
+        ##
+        
+        # s_size = sum(segment_size)
+        # return s_size,segment_url[0]
 
+        # connection = urllib.request.urlopen(segment_url) #Jerry
+        
+    except urllib.error.HTTPError as error: #Jerry
+        config_dash.LOG.error("Unable to download DASH Segment {} HTTP Error:{} ".format(segment_url, str(error.code)))
+        return None
+        
+    
+
+def get_patch_tile(player,media_list,patch_dict):
+    
+    '''
+    patch_file_name = "compare_tile/coaster_10x10_user07_segtile_1_02"
+    patch_tiles = open(patch_file_name)
+    patch_original = patch_tiles.read().splitlines()
+    patch_split = [line.split(",") for line in patch_original]
+    patch_key = [float(i.split(",")[0].split("_")[0]) for i in patch_original]
+    patch_segment = [int(i.split(",")[0].split("_")[1]) for i in patch_original]
+    #print(patch_key)
+    #print(patch_segment)
+    patch_dict = dict()
+
+    for i in range(0,len(patch_key)):
+        patch_dict[patch_key[i]]=list()
+        patch_dict[patch_key[i]].append(patch_segment[i])
+        for j in range(1,len(patch_split[i])):
+            patch_dict[patch_key[i]].append(patch_split[i][j])
+    '''
+    
+    global bitrate_for_patch
+    period = 0.2
+    next_period = 0.2
+    while True:
+        if float(player.playback_timer.time_float())>= 59.8:
+            break
+        play_time = round(float(player.playback_timer.time_float()),6)
+        if float(play_time) >= float(next_period) :
+            p_time = float(round(play_time,1))
+            patch_url=media_list[patch_dict[p_time][0]][bitrate_for_patch] ## float(round(play_time,1)
+            if len(patch_dict[p_time]) != 1:
+                patch_tile_url = []
+                # f.write(str(p_time)+"  ,bitrate: "+str(bitrate_for_patch))
+                # f.write("\n")
+                for k in range(1,len(patch_dict[p_time])):
+                    patch_tile_url.append(patch_url[int(patch_dict[p_time][k])-1])
+                    # f.write(str(patch_url[int(patch_dict[p_time][k])-1]))
+                    # f.write("\n")
+                patch_tile_url = ["http://140.114.77.125/coaster_10x10/"+str(f) for f in patch_tile_url]
+                download_patch_segment(patch_tile_url)
+            # f.write(str(round(play_time,1))+"  ,bitrate: "+str(bitrate_for_patch))
+            
+            next_period += period
+    # f.close()
+    
+    
+        
+        
 def start_playback_smart(dp_object, domain, playback_type=None, download=False, video_segment_duration=None):
     """ Module that downloads the MPD-FIle and download
         all the representations of the Module to download
@@ -235,6 +315,9 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
     dp_list = defaultdict(defaultdict)
     # Creating a Dictionary of all that has the URLs for each segment and different bitrates
     dp_size = defaultdict(defaultdict) # Jerry for segment size
+    
+    
+
     
     
     for bitrate in dp_object.video:
@@ -289,6 +372,30 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
     average_segment_sizes = netflix_rate_map = None
     netflix_state = "INITIAL"
     # Start playback of all the segments
+    global bitrate_for_patch
+    bitrate_for_patch = current_bitrate
+    
+    
+    patch_file_name = "compare_tile/coaster_10x10_user07_segtile_1_02"
+    patch_tiles = open(patch_file_name)
+    patch_original = patch_tiles.read().splitlines()
+    patch_split = [line.split(",") for line in patch_original]
+    patch_key = [float(i.split(",")[0].split("_")[0]) for i in patch_original]
+    patch_segment = [int(i.split(",")[0].split("_")[1]) for i in patch_original]
+    #print(patch_key)
+    #print(patch_segment)
+    patch_dict = dict()
+
+    for i in range(0,len(patch_key)):
+        patch_dict[patch_key[i]]=list()
+        patch_dict[patch_key[i]].append(patch_segment[i])
+        for j in range(1,len(patch_split[i])):
+            patch_dict[patch_key[i]].append(patch_split[i][j])
+    
+    
+    ## patch //Jerry 
+    patch_thread = threading.Thread(target = get_patch_tile,args = (dash_player,dp_list,patch_dict,))
+    patch_thread.start()    
     
     
     ## Read tiles that need to request //Jerry
@@ -307,6 +414,8 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
     
     
     for segment_number, segment in enumerate(dp_list, dp_object.video[current_bitrate].start):
+        bitrate_for_patch = current_bitrate ## for patch
+        
         config_dash.LOG.info(" {}: Processing the segment {}".format(playback_type.upper(), segment_number))
         write_json()
         if not previous_bitrate:
@@ -411,6 +520,8 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
                 time.sleep(1)
             delay = 0
             config_dash.LOG.debug("SLEPT for {}seconds ".format(time.time() - delay_start))
+            
+            
         start_time = None
         try:
             while(1):
@@ -429,6 +540,7 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
             config_dash.LOG.error("Unable to save segment %s" % e)
             return None
         
+        '''
         ## for Server   
         tt = [name.split('/')[-1] for name in regular_url]    
         d_file_name=[]
@@ -438,8 +550,8 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
             for i, line in enumerate(d_regular):
                 d_file_name.append(line.rstrip('\n'))  
             d_regular.close()
-        
         ###        
+        '''
             
         segment_download_time = timeit.default_timer() - start_time
         previous_segment_times.append(segment_download_time)
@@ -493,6 +605,8 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
             break
 
     write_json()
+    patch_thread.join() #Jerry
+    
     if not download:
         clean_files(file_identifier)
 
@@ -644,17 +758,9 @@ def main():
     dp_object.video['2'] = dp2.video['2']
     dp_object.video['1']=dp3.video['1']
     
-    
-    
-    # print(dp_object.video['high'].base_url)
-    # # print(dp_object.video['high'].track_name[2])
-    # print(dp_object.video['medium'].base_url)
-    # print(dp_object.video['low'].track_name[2])
-    # dp_object.video['medium']=dp_object.video['high']
-    # print(dp_object.video['medium'].base_url)
-    # 
-    # 
     config_dash.LOG.info("The DASH media has %d video representations" % len(dp_object.video))
+    
+    global now_play_time  # Jerry
     
     if LIST:
         # Print the representations and EXIT

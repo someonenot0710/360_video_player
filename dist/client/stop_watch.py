@@ -34,3 +34,11 @@ class StopWatch():
         if self.running:
             self.elapsed_time = time.time() - self.start_time
         return int(self.elapsed_time)
+
+    def time_float(self):
+        """
+        :return: elapsed time
+        """
+        if self.running:
+            self.elapsed_time = time.time() - self.start_time
+        return self.elapsed_time
