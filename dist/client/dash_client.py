@@ -127,30 +127,26 @@ def id_generator(id_size=6):
 def download_segment(segment_url, dash_folder, segment_size):
     """ Module to download the segment """
     try:
+        '''
         quic_file = open("./quic_file.txt","a")
         for url in segment_url:
             url_new=str(url).replace("140.114.77.125","www.example.org")
             quic_file.write(str(url_new)+"\n")
         quic_file.close()
-        
+        '''
         ## for request quic server
-        # quic_file = open("/home/jerry/Desktop/for_quic/quic.txt","a")
-        # for num in range(0,len(segment_url)-1):
-        #     url = str(segment_url[num])
-        #     url_new=str(url).replace("140.114.77.125/coaster_10x10","www.example.org")
-        #     url_new=url_new.replace("http","https")
-        #     quic_file.write(str(url_new)+"\n")
-        #     if num>50:
-        #         break
-        # quic_file.close()        
+        quic_file = open("/home/jerry/Desktop/for_quic/quic.txt","a")
+        for num in range(0,len(segment_url)):
+            url = str(segment_url[num])
+            url_new=str(url).replace("140.114.77.125/coaster_10x10","www.example.org")
+            url_new=url_new.replace("http","https")
+            quic_file.write(str(url_new)+"\n")
+        quic_file.close()        
         ##
         
-        # print(segment_url[0])
-        # print(segment_size[0])
         s_size = sum(segment_size)
-        # print(s_size)
         return s_size,segment_url[0]
-        # return 0,None
+
         # connection = urllib.request.urlopen(segment_url) #Jerry
         
     except urllib.error.HTTPError as error: #Jerry
@@ -392,8 +388,10 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
         
         ## only get current predict
         regular_url = []
+        regular_size = []
         for number in patch[segment]:
             regular_url.append(segment_url[int(number)-1])
+            regular_size.append(segment_size[int(number)-1])
             
             
         # print(regular_url)
@@ -414,7 +412,7 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
             config_dash.LOG.debug("SLEPT for {}seconds ".format(time.time() - delay_start))
         start_time = timeit.default_timer()
         try:
-            segment_size, segment_filename = download_segment(regular_url, file_identifier, segment_size)
+            segment_size, segment_filename = download_segment(regular_url, file_identifier, regular_size)
             
             # config_dash.LOG.info("{}: Downloaded segment {}".format(playback_type.upper(), segment_url))
             
@@ -442,18 +440,17 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
         if playback_type.upper() == "SMART" and weighted_mean_object:
             weighted_mean_object.update_weighted_mean(segment_size, segment_download_time)
 
-        tt = [name.split('/')[-1] for name in segment_url]
+        tt = [name.split('/')[-1] for name in regular_url]
 
-        ## for Server
-        '''
+        ## for Server        
         d_file_name=[]
-        while not set(tt[0:52]).issubset(set(d_file_name)) :
+        while not set(tt).issubset(set(d_file_name)) :
             d_file_name=[]
             d_regular = open("/home/jerry/Desktop/for_quic/log.txt")
             for i, line in enumerate(d_regular):
                 d_file_name.append(line.rstrip('\n'))  
             d_regular.close()
-        '''
+        
         ###
         
         segment_info = {'playback_length': video_segment_duration,
