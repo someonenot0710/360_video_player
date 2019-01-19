@@ -411,12 +411,13 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
                 time.sleep(1)
             delay = 0
             config_dash.LOG.debug("SLEPT for {}seconds ".format(time.time() - delay_start))
-        start_time = timeit.default_timer()
+        start_time = None
         try:
             while(1):
                 if dash_player.do_request==True or segment<=config_dash.INITIAL_BUFFERING_COUNT:
                     dash_player.do_request = False
                     break
+            start_time = timeit.default_timer()
             segment_size, segment_filename = download_segment(regular_url, file_identifier, regular_size)
              
             
@@ -427,7 +428,18 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
         except IOError as e: #Jerry
             config_dash.LOG.error("Unable to save segment %s" % e)
             return None
-
+        
+        ## for Server   
+        '''     
+        d_file_name=[]
+        while not set(tt).issubset(set(d_file_name)) :
+            d_file_name=[]
+            d_regular = open("/home/jerry/Desktop/for_quic/log.txt")
+            for i, line in enumerate(d_regular):
+                d_file_name.append(line.rstrip('\n'))  
+            d_regular.close()
+        '''
+        ###        
             
         segment_download_time = timeit.default_timer() - start_time
         previous_segment_times.append(segment_download_time)
@@ -448,17 +460,7 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
 
         tt = [name.split('/')[-1] for name in regular_url]
 
-        ## for Server   
-        '''     
-        d_file_name=[]
-        while not set(tt).issubset(set(d_file_name)) :
-            d_file_name=[]
-            d_regular = open("/home/jerry/Desktop/for_quic/log.txt")
-            for i, line in enumerate(d_regular):
-                d_file_name.append(line.rstrip('\n'))  
-            d_regular.close()
-        '''
-        ###
+
         
         segment_info = {'playback_length': video_segment_duration,
                         'size': segment_size,
