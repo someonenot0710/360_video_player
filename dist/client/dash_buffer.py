@@ -47,6 +47,7 @@ class DashPlayer:
         self.buffer_lock = threading.Lock()
         self.current_segment = None
         self.buffer_log_file = config_dash.BUFFER_LOG_FILENAME
+        self.do_request = True
         config_dash.LOG.info("VideoLength={},segmentDuration={},MaxBufferSize={},InitialBuffer(secs)={},"
                              "BufferAlph(secs)={},BufferBeta(secs)={}".format(self.playback_duration,
                                                                               self.segment_duration,
@@ -168,13 +169,16 @@ class DashPlayer:
 
                     # Start the playback
                     self.playback_timer.start()
+                    flag=0
                     while self.playback_timer.time() < future:
                         # If playback hasn't started yet, set the playback_start_time
                         if not self.playback_start_time:
                             self.playback_start_time = time.time()
                             config_dash.LOG.info("Started playing with representation {} at {}".format(
                                 play_segment['bitrate'], self.playback_timer.time()))
-
+                        flag+=1
+                        if flag==1:
+                            self.do_request=True
                         # Duration for which the video was played in seconds (integer)
                         if self.playback_timer.time() >= self.playback_duration:
                             config_dash.LOG.info("Completed the video playback: {} seconds".format(

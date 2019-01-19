@@ -127,12 +127,13 @@ def id_generator(id_size=6):
 def download_segment(segment_url, dash_folder, segment_size):
     """ Module to download the segment """
     try:
-        '''
+        
         quic_file = open("./quic_file.txt","a")
         for url in segment_url:
             url_new=str(url).replace("140.114.77.125","www.example.org")
             quic_file.write(str(url_new)+"\n")
         quic_file.close()
+        
         '''
         ## for request quic server
         quic_file = open("/home/jerry/Desktop/for_quic/quic.txt","a")
@@ -143,7 +144,7 @@ def download_segment(segment_url, dash_folder, segment_size):
             quic_file.write(str(url_new)+"\n")
         quic_file.close()        
         ##
-        
+        '''
         s_size = sum(segment_size)
         return s_size,segment_url[0]
 
@@ -412,7 +413,12 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
             config_dash.LOG.debug("SLEPT for {}seconds ".format(time.time() - delay_start))
         start_time = timeit.default_timer()
         try:
+            while(1):
+                if dash_player.do_request==True or segment<=config_dash.INITIAL_BUFFERING_COUNT:
+                    dash_player.do_request = False
+                    break
             segment_size, segment_filename = download_segment(regular_url, file_identifier, regular_size)
+             
             
             # config_dash.LOG.info("{}: Downloaded segment {}".format(playback_type.upper(), segment_url))
             
@@ -442,7 +448,8 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
 
         tt = [name.split('/')[-1] for name in regular_url]
 
-        ## for Server        
+        ## for Server   
+        '''     
         d_file_name=[]
         while not set(tt).issubset(set(d_file_name)) :
             d_file_name=[]
@@ -450,7 +457,7 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
             for i, line in enumerate(d_regular):
                 d_file_name.append(line.rstrip('\n'))  
             d_regular.close()
-        
+        '''
         ###
         
         segment_info = {'playback_length': video_segment_duration,
