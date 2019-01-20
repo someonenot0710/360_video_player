@@ -266,10 +266,12 @@ def get_patch_tile(player,media_list,patch_dict):
     period = 0.2
     next_period = 0.2
     while True:
-        if float(player.playback_timer.time_float())>= 59.8:
+        play_time = float(player.playback_timer.time_float())
+        if play_time>= 59.8:
             break
-        play_time = round(float(player.playback_timer.time_float()),6)
-        if float(play_time) >= float(next_period) :
+        # print(player.playback_timer.time_float())
+        # play_time = round(float(player.playback_timer.time_float()),6)
+        if play_time >= next_period :
             p_time = float(round(play_time,1))
             patch_url=media_list[patch_dict[p_time][0]][bitrate_for_patch] ## float(round(play_time,1)
             if len(patch_dict[p_time]) != 1:
@@ -427,7 +429,7 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
                 config_dash.LOG.info("Segment limit reached")
                 break
         print ("segment_number ={}".format(segment_number))
-        print ("dp_object.video[bitrate].start={}".format(dp_object.video[bitrate].start))
+        # print ("dp_object.video[bitrate].start={}".format(dp_object.video[bitrate].start))
         if segment_number == dp_object.video[bitrate].start:
             current_bitrate = bitrates[0]
         else:
