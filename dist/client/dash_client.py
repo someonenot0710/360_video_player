@@ -214,7 +214,7 @@ def download_patch_segment(segment_url):
     """ Module to download the segment """
     try:
         
-        quic_file = open("./quic_patch_file.txt","a")
+        quic_file = open("./quic_patch_file.txt","w")
         for url in segment_url:
             # url_new=str(url).replace("140.114.77.125","www.example.org")
             quic_file.write(str(url)+"\n")
