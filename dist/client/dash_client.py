@@ -131,8 +131,8 @@ def download_segment(segment_url, dash_folder, segment_size):
         
         quic_file = open("./quic_file.txt","a")
         for url in segment_url:
-            url_new=str(url).replace("140.114.77.125","www.example.org")
-            quic_file.write(str(url_new)+"\n")
+            # url_new=str(url).replace("140.114.77.125","www.example.org")
+            quic_file.write(str(url)+"\n") # url_new
         quic_file.close()
         
         '''
@@ -140,9 +140,9 @@ def download_segment(segment_url, dash_folder, segment_size):
         quic_file = open("/home/jerry/Desktop/for_quic/quic.txt","a")
         for num in range(0,len(segment_url)):
             url = str(segment_url[num])
-            url_new=str(url).replace("140.114.77.125/coaster_10x10","www.example.org")
-            url_new=url_new.replace("http","https")
-            quic_file.write(str(url_new)+"\n")
+            # url_new=str(url).replace("140.114.77.125/coaster_10x10","www.example.org")
+            # url_new=url_new.replace("http","https")
+            quic_file.write(url+"\n") # url_new
         quic_file.close()        
         ##
         '''
@@ -213,24 +213,24 @@ def print_representations(dp_object):
 def download_patch_segment(segment_url):
     """ Module to download the segment """
     try:
-        '''
+        
         quic_file = open("./quic_patch_file.txt","a")
         for url in segment_url:
-            url_new=str(url).replace("140.114.77.125","www.example.org")
-            quic_file.write(str(url_new)+"\n")
+            # url_new=str(url).replace("140.114.77.125","www.example.org")
+            quic_file.write(str(url)+"\n")
         quic_file.close()
-        '''
         
+        '''
         ## for request quic server
         quic_file = open("/home/jerry/Desktop/for_quic/quic_patch.txt","a")
         for num in range(0,len(segment_url)):
             url = str(segment_url[num])
-            url_new=str(url).replace("140.114.77.125/coaster_10x10","www.example.org")
-            url_new=url_new.replace("http","https")
-            quic_file.write(str(url_new)+"\n")
+            # url_new=str(url).replace("140.114.77.125/coaster_10x10","www.example.org")
+            # url_new=url_new.replace("http","https")
+            quic_file.write(url+"\n")
         quic_file.close()        
         ##
-        
+        '''
         # s_size = sum(segment_size)
         # return s_size,segment_url[0]
 
@@ -280,7 +280,7 @@ def get_patch_tile(player,media_list,patch_dict):
                     patch_tile_url.append(patch_url[int(patch_dict[p_time][k])-1])
                     # f.write(str(patch_url[int(patch_dict[p_time][k])-1]))
                     # f.write("\n")
-                patch_tile_url = ["http://140.114.77.125/coaster_10x10/"+str(f) for f in patch_tile_url]
+                # patch_tile_url = ["http://140.114.77.125/coaster_10x10/"+str(f) for f in patch_tile_url]
                 download_patch_segment(patch_tile_url)
             # f.write(str(round(play_time,1))+"  ,bitrate: "+str(bitrate_for_patch))
             
@@ -342,13 +342,13 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
             segment_url=[]
             segment_size=[]
             for track in range(0,len(media_urls)): # track numbers
-                segment_url.append(media_urls[track][segment_count-1])
+                add_domain = "https://www.example.org/"+str(media_urls[track][segment_count-1])
+                segment_url.append(add_domain) #media_urls[track][segment_count-1]
                 segment_size.append(media_size[track][segment_count-1])
             dp_list[segment_count][bitrate] = segment_url # segment_url = track_1_x~track_200_x  a segment_url represent a segment with # of track
             dp_size[segment_count][bitrate] = segment_size
+
             
-            # print(segment_url)
-            # return None
             
     bitrates = dp_object.video.keys() # ['high', 'medium', 'low']
     bitrates = list(bitrates) #Jerry
@@ -491,16 +491,16 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
         
         
         
-        segment_url = []
-        for seg_path in segment_path:
-            req_url = domain+dir_path+seg_path
-            segment_url.append(req_url)
+        # segment_url = []
+        # for seg_path in segment_path:
+        #     req_url = domain+dir_path+seg_path
+        #     segment_url.append(req_url)
         
         ## only get current predict
         regular_url = []
         regular_size = []
         for number in patch[segment]:
-            regular_url.append(segment_url[int(number)-1])
+            regular_url.append(segment_path[int(number)-1]) #segment_url
             regular_size.append(segment_size[int(number)-1])
             
             
@@ -744,6 +744,9 @@ def main():
     domain = get_domain_name(MPD)
     dp_object = DashPlayback()
     # Reading the MPD file created
+    
+
+    
     print('file: '+mpd_file)
     
     # read_mpd.read_mpd(mpd_file, dp_object) # just test
