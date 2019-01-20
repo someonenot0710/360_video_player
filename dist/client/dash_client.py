@@ -267,6 +267,7 @@ def get_patch_tile(player,media_list,patch_dict):
     next_period = 0.2
     while True:
         play_time = float(player.playback_timer.time_float())
+        print(play_time)
         if play_time>= 59.8:
             break
         # print(player.playback_timer.time_float())
