@@ -201,9 +201,9 @@ def get_request_tile(tile_num_w,tile_num_h,next_center):
         y_tile_num = math.floor(tmp_y/each_tile_height)
 
         request_tile[y_tile_num]=list()
-        print(x_right - x_left)
+        # print(x_right - x_left)
         if float(x_right_o - x_left_o) >= 3840.0 or  float(x_left_o - x_right_o) >= 3840.0:
-            print("in special if")
+            # print("in special if")
             for i in range(0,tile_num_w):
                     if i not in request_tile[y_tile_num]:
                         request_tile[y_tile_num].append(i)
@@ -223,14 +223,14 @@ def get_request_tile(tile_num_w,tile_num_h,next_center):
                 if i not in request_tile[y_tile_num]:
                     request_tile[y_tile_num].append(i)
 
-    print(request_tile)
+    # print(request_tile)
 
     request_tile_in_number = list()
     for item in request_tile:
         for num in request_tile[item]:
             number = item*tile_num_w + int(num) + 1
             if number not in request_tile_in_number:
-                request_tile_in_number.append(number)
+                request_tile_in_number.append(int(number))
     return request_tile_in_number
 #     print(request_tile_in_number)
 

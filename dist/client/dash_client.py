@@ -39,6 +39,9 @@ import time
 import re
 import threading
 import dr_prediction_simple
+
+
+import math
 '''
 try:
     WindowsError
@@ -133,6 +136,8 @@ def download_segment(segment_url, dash_folder, segment_size):
     try:
 
         quic_file = open("./quic_file.txt","a")
+        # quic_file.write(str(frame_num)+": ")
+
         for url in segment_url:
             # url_new=str(url).replace("140.114.77.125","www.example.org")
             quic_file.write(str(url)+"\n") # url_new
@@ -269,6 +274,7 @@ def get_patch_tile(player,media_list,patch_dict):
     '''
 
     global bitrate_for_patch
+    global total_request
     period = 0.5
     next_period = 0.5
     pre_time = 0.0
@@ -282,16 +288,34 @@ def get_patch_tile(player,media_list,patch_dict):
 
         if play_time >= next_period :
             p_time = float(round(play_time,1))
+            req_segment = int(math.floor(next_period+period))
             next_center , v_pre = dr_prediction_simple.dr_prediction(pre_time,p_time,v_pre)
             patch_tile_url=dr_prediction_simple.get_request_tile(10,10,next_center)
             patch_tile_url.sort()
+
+            # dr_file = open("./quic_dr_file.txt","a")
+            # dr_file.write(str(pre_time)+","+str(p_time)+": ")
+            # for url in patch_tile_url:
+            #     # url_new=str(url).replace("140.114.77.125","www.example.org")
+            #     # quic_file.write(str(url)+"\n")
+            #     dr_file.write(str(url)+" ")
+            # dr_file.write('\n')
+            # dr_file.close()
+
+            real_patch_url = [] ## store the urls that have already been compared
+            for tile in patch_tile_url:
+                if tile not in total_request[req_segment]:
+                    real_patch_url.append(tile)
+                    total_request[req_segment].append(tile)
+
+
             # patch_url=media_list[patch_dict[p_time][0]][bitrate_for_patch] ## float(round(play_time,1)
             # if len(patch_dict[p_time]) != 1:
             #     patch_tile_url = []
             #
             #     for k in range(1,len(patch_dict[p_time])):
             #         patch_tile_url.append(patch_url[int(patch_dict[p_time][k])-1])
-            download_patch_segment(patch_tile_url,pre_time,p_time)
+            download_patch_segment(real_patch_url,pre_time,p_time)
             pre_time = p_time
 
             next_period += period
@@ -428,6 +452,7 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
                 patch[segment_number].append(i)
     ###
 
+    global total_request
     total_request = dict() ## Record tiles that request
 
     for segment_number, segment in enumerate(dp_list, dp_object.video[current_bitrate].start):
@@ -502,6 +527,8 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
                 config_dash.LOG.error("Unknown playback type:{}. Continuing with basic playback".format(playback_type))
                 current_bitrate, average_dwn_time = basic_dash.basic_dash(segment_number, bitrates, average_dwn_time,
                                                                           segment_download_time, current_bitrate)
+
+
         segment_path = dp_list[segment][current_bitrate]
         segment_size = dp_size[segment][current_bitrate]
 
@@ -516,9 +543,29 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
         ## only get current predict
         regular_url = []
         regular_size = []
-        for number in patch[segment]:
-            regular_url.append(segment_path[int(number)-1]) #segment_url
-            regular_size.append(segment_size[int(number)-1])
+
+        play_time_1 = round(dash_player.playback_timer.time_float(),1)
+        play_frame = math.floor(play_time_1*30)
+        total_request[segment]=list()
+        if play_time_1 > 0.1:
+            for number in gt_trace[play_frame]:
+                regular_url.append(segment_path[int(number)-1]) #segment_url
+                regular_size.append(segment_size[int(number)-1])
+
+                # if number not in total_request[segment]:
+                total_request[segment].append(int(number))
+        else :
+            for number in gt_trace[(segment-1)*30+1]:
+                regular_url.append(segment_path[int(number)-1]) #segment_url
+                regular_size.append(segment_size[int(number)-1])
+                # if number not in total_request[segment]:
+                total_request[segment].append(int(number))
+
+        # for number in patch[segment]:
+        #     regular_url.append(segment_path[int(number)-1]) #segment_url
+        #     regular_size.append(segment_size[int(number)-1])
+
+
 
 
         # print(regular_url)
@@ -624,6 +671,7 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
     write_json()
     patch_thread.join() #Jerry
 
+    # print(total_request)
     if not download:
         clean_files(file_identifier)
 
@@ -765,18 +813,17 @@ def main():
 
 
 
-    ## read ground truth gt_trace
-    # dir_path = "./SC/sensors/"
-    # user_file_name = "coaster_user07_orientation.csv"
-    # trace = open(dir_path+user_file_name)
-    # trace_data = trace.read().splitlines()
-    # for frame in range(1,len(trace_data)):
-    #     split = trace_data[frame].split(", ")
-    #     gt_trace[int(split[0])]=dict()
-    #     gt_trace[int(split[0])]['yaw']=float(split[7]) # theta
-    #     gt_trace[int(split[0])]['pitch']=float(split[8]) # phi
-    #     gt_trace[int(split[0])]['roll']=float(split[9])
-    ## end read gt
+    # read ground truth gt_trace
+    dir_path = './SC/gt_frame_num/'
+    user_file_name = "coaster_10x10_user07_segtile"
+    trace = open(dir_path+user_file_name)
+    trace_data = trace.read().splitlines()
+    for frame in range(0,len(trace_data)):
+        split = trace_data[frame].split(",")
+        gt_trace[int(split[0])]=list()
+        for j in range(1,len(split)):
+            gt_trace[int(split[0])].append(int(split[j]))
+    # end read gt
 
     # read_mpd.read_mpd(mpd_file, dp_object) # just test
     # return None
