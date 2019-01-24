@@ -61,7 +61,7 @@ BASIC_DELTA_COUNT = 5
 # Number of segments for moving weighted average
 SARA_SAMPLE_COUNT = 5
 # Constants for the Buffer in the Weighted adaptation scheme (in segments)
-INITIAL_BUFFERING_COUNT = 1 # original 1  initial_bufferrrrrr
+INITIAL_BUFFERING_COUNT = 2 # original 1  initial_bufferrrrrr
 RE_BUFFERING_COUNT = 1
 ALPHA_BUFFER_COUNT = 5
 BETA_BUFFER_COUNT = 10
@@ -77,7 +77,7 @@ NETFLIX_RESERVOIR = 0.1
 NETFLIX_CUSHION = 0.9
 # Buffer Size in Number of segments 240/4
 NETFLIX_BUFFER_SIZE = 60
-NETFLIX_INITIAL_BUFFER = 2
+NETFLIX_INITIAL_BUFFER = 1
 NETFLIX_INITIAL_FACTOR = 0.875
 
 # For ping.py

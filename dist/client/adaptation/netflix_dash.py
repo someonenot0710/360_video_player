@@ -80,7 +80,7 @@ def netflix_dash(bitrates, dash_player, segment_download_rate, curr_bitrate, ave
     """
     Netflix rate adaptation module
     """
-    available_video_segments = dash_player.buffer.qsize() - dash_player.initial_buffer
+    available_video_segments = dash_player.buffer.qsize() - config_dash.NETFLIX_INITIAL_BUFFER #dash_player.initial_buffer
     print("available_video_segments-------------------------:   " +str(available_video_segments))
     if not (curr_bitrate or rate_map or state):
         rate_map = get_rate_map(bitrates)

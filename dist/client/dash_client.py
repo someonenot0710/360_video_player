@@ -315,7 +315,9 @@ def get_patch_tile(player,media_list,patch_dict):
             #
             #     for k in range(1,len(patch_dict[p_time])):
             #         patch_tile_url.append(patch_url[int(patch_dict[p_time][k])-1])
-            download_patch_segment(real_patch_url,pre_time,p_time)
+            if len(real_patch_url) >=1:
+                download_patch_segment(real_patch_url,pre_time,p_time)
+
             pre_time = p_time
 
             next_period += period
