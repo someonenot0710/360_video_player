@@ -287,45 +287,50 @@ def get_patch_tile(player,media_list,patch_dict):
             break
 
         if play_time >= next_period :
-            print("download rate %f" %(global_segment_download_rate))
-            p_time = float(round(play_time,1))
-            req_segment = int(math.floor(next_period+period))+1
-            next_center , v_pre = dr_prediction_simple.dr_prediction(pre_time,p_time,v_pre)
-            patch_tile_url=dr_prediction_simple.get_request_tile(10,10,next_center)
-            patch_tile_url.sort()
+            print("***now buffer size***: %d"%(int(player.buffer.qsize())))
+            if int(player.buffer.qsize()) <=1:
+                None
+            else:
+                
+                print("download rate %f" %(global_segment_download_rate))
+                p_time = float(round(play_time,1))
+                req_segment = int(math.floor(next_period+period))+1
+                next_center , v_pre = dr_prediction_simple.dr_prediction(pre_time,p_time,v_pre)
+                patch_tile_url=dr_prediction_simple.get_request_tile(10,10,next_center)
+                patch_tile_url.sort()
 
-            # total_patch[p_time]=patch_tile_url
+                # total_patch[p_time]=patch_tile_url
 
-            # dr_file = open("./quic_dr_file.txt","a")
-            # dr_file.write(str(pre_time)+","+str(p_time)+": ")
-            # for url in patch_tile_url:
-            #     # url_new=str(url).replace("140.114.77.125","www.example.org")
-            #     # quic_file.write(str(url)+"\n")
-            #     dr_file.write(str(url)+" ")
-            # dr_file.write('\n')
-            # dr_file.close()
+                # dr_file = open("./quic_dr_file.txt","a")
+                # dr_file.write(str(pre_time)+","+str(p_time)+": ")
+                # for url in patch_tile_url:
+                #     # url_new=str(url).replace("140.114.77.125","www.example.org")
+                #     # quic_file.write(str(url)+"\n")
+                #     dr_file.write(str(url)+" ")
+                # dr_file.write('\n')
+                # dr_file.close()
 
-            real_patch_number = [] ## store the numbers that have already been compared
-            real_patch_url = [] ## store the url that have already been compared
-            for tile in patch_tile_url:
-                if tile not in total_request[req_segment]:
-                    if req_segment not in total_patch:
-                        total_patch[req_segment]=list()
-                    real_patch_number.append(tile)
-                    total_request[req_segment].append(tile)
-                    total_patch[req_segment].append(tile)
-            for tile in real_patch_number:
-                real_patch_url.append(media_list[req_segment][bitrate_for_patch][tile])
+                real_patch_number = [] ## store the numbers that have already been compared
+                real_patch_url = [] ## store the url that have already been compared
+                for tile in patch_tile_url:
+                    if tile not in total_request[req_segment]:
+                        if req_segment not in total_patch:
+                            total_patch[req_segment]=list()
+                        real_patch_number.append(tile)
+                        total_request[req_segment].append(tile)
+                        total_patch[req_segment].append(tile)
+                for tile in real_patch_number:
+                    real_patch_url.append(media_list[req_segment][bitrate_for_patch][tile])
 
 
-            # patch_url=media_list[patch_dict[p_time][0]][bitrate_for_patch] ## float(round(play_time,1)
-            # if len(patch_dict[p_time]) != 1:
-            #     patch_tile_url = []
-            #
-            #     for k in range(1,len(patch_dict[p_time])):
-            #         patch_tile_url.append(patch_url[int(patch_dict[p_time][k])-1])
-            if len(real_patch_url) >=1:
-                download_patch_segment(real_patch_url,pre_time,p_time)
+                # patch_url=media_list[patch_dict[p_time][0]][bitrate_for_patch] ## float(round(play_time,1)
+                # if len(patch_dict[p_time]) != 1:
+                #     patch_tile_url = []
+                #
+                #     for k in range(1,len(patch_dict[p_time])):
+                #         patch_tile_url.append(patch_url[int(patch_dict[p_time][k])-1])
+                if len(real_patch_url) >=1:
+                    download_patch_segment(real_patch_url,pre_time,p_time)
 
             pre_time = p_time
 
