@@ -1,6 +1,6 @@
 import numpy as np
 from scipy.signal import butter, lfilter, freqz
-#import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 import sys
 from cal_prob import gen_prob
 # 1: video, 2: fov_degree, 3: tile_num, 4: us, 5: ut
@@ -102,6 +102,7 @@ for i in range(2*frame_w,total_frames,frame_interval):
     ty.append(y[i-frame_w]+interval*vvy[i-frame_w])
     tp.append(p[i-frame_w]+interval*vvp[i-frame_w])
 
+'''
 final_probs=[]
 for i in range(len(ty)):
         out.write('sec_%.2f, '%(i*interval))
@@ -112,6 +113,9 @@ for i in range(len(ty)):
         out.write('\n')
 out.close()
 '''
+
+
+
 plt.subplot(2, 1, 2)
 plt.plot(t2, ty, 'b-', label='data')
 #plt.plot(t,yaw,'b-',label='data')
@@ -122,7 +126,7 @@ plt.legend()
 
 plt.subplots_adjust(hspace=0.35)
 plt.show()
-'''
+
 #print ty
 #print tp
 

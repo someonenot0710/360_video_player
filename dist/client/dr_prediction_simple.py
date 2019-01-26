@@ -136,6 +136,9 @@ def dr_prediction(pre_time,now_time,v_pre={'yaw': 0, 'pitch': 0}):
 def get_width(pitch):
     return (100.0/math.cos(math.radians(pitch)))*(3840.0/360.0)
 
+def get_width_circle(width,center_pitch,other_pitch):
+    return width*math.cos(math.radians(other_pitch)-math.radians(center_pitch))
+
 def check_left_right(right,left):
     if right > 3840.0:
         right  = right - 3840.0
@@ -186,7 +189,8 @@ def get_request_tile(tile_num_w,tile_num_h,next_center):
                 request_tile[tile_num_h-1].append(i)
             continue
 
-        w = get_width(now_pitch)
+        # w = get_width(now_pitch)
+        w =  get_width_circle(width_length,next_center['pitch'],now_pitch) ## circle
         x_right_o = x + w/2.0
         x_left_o = x - w/2.0
 #         print("pitch:%f"%(now_pitch))
