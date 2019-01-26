@@ -96,7 +96,7 @@ def dr_prediction(pre_time,now_time,v_pre={'yaw': 0, 'pitch': 0}):
     # prediction_time = (time2-time1)/30.0  #0.5 # should be time1 - time2 , need to transform to second /30
     time1 = int(pre_time*30)+1 #frame1
     time2 = int(now_time*30)+1 #frame2
-    prediction_time = now_time - pre_time
+    prediction_time = float(now_time) - float(pre_time)
 
     # v_pre = dict() # for recording previous velocity
     # v_pre['yaw']=0
