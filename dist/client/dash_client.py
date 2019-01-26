@@ -287,13 +287,14 @@ def get_patch_tile(player,media_list,patch_dict):
             break
 
         if play_time >= next_period :
+            p_time = float(round(play_time,1))
             print("***now buffer size***: %d"%(int(player.buffer.qsize())))
             if int(player.buffer.qsize()) <=1:
                 None
             else:
                 
                 print("download rate %f" %(global_segment_download_rate))
-                p_time = float(round(play_time,1))
+                # p_time = float(round(play_time,1))
                 req_segment = int(math.floor(next_period+period))+1
                 next_center , v_pre = dr_prediction_simple.dr_prediction(pre_time,p_time,v_pre)
                 patch_tile_url=dr_prediction_simple.get_request_tile(10,10,next_center)
