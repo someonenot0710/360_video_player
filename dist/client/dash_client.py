@@ -266,11 +266,12 @@ def write_final_file(total_patch,file_name):
 
 
 
-def get_patch_tile(player,media_list,patch_dict):
+def get_patch_tile(player,media_list,media_size):
 
     global bitrate_for_patch
     global total_request
     global global_segment_download_rate 
+    decided_patch_rate="1"
     period = config_dash.PREDICT_PERIOD
     next_period = float(config_dash.INITIAL_BUFFERING_COUNT-period) #0.5
     pre_time = float(config_dash.INITIAL_BUFFERING_COUNT-period*2)
@@ -300,7 +301,7 @@ def get_patch_tile(player,media_list,patch_dict):
 
             elif play_time >= next_period: ##and play_time > float(config_dash.INITIAL_BUFFERING_COUNT-period):
                 p_time = float(round(play_time,1))
-                print("***now buffer size***: %d"%(int(player.buffer.qsize())))
+                # print("***now buffer size***: %d"%(int(player.buffer.qsize())))
                 if int(player.buffer.qsize()) < config_dash.NOT_PATCH_SIZE and p_time<59.0:
                     pre_time = p_time
                     next_period = next_period + period 
@@ -308,7 +309,7 @@ def get_patch_tile(player,media_list,patch_dict):
                     
                 else:
                     
-                    print("download rate %f" %(global_segment_download_rate))
+                    # print("download rate %f" %(global_segment_download_rate))
                     # p_time = float(round(play_time,1))
                     req_segment = int(math.floor(next_period+period))+1
                     # print('&&&&&&&&&&&ssssss&&&&&&&&&: %d'%(req_segment))
@@ -336,8 +337,27 @@ def get_patch_tile(player,media_list,patch_dict):
                             real_patch_number.append(tile)
                             total_request[req_segment].append(tile)
                             total_patch[req_segment].append(tile)
+                    high_size=0.0
+                    medium_size=0.0
+                    low_size=0.0
+                    
                     for tile in real_patch_number:
-                        real_patch_url.append(media_list[req_segment][bitrate_for_patch][tile])
+                        high_size += media_size[req_segment][str(3)][tile]
+                        medium_size += media_size[req_segment][str(2)][tile]
+                        low_size += media_size[req_segment][str(1)][tile]
+                    
+                    max_patch_rate = global_segment_download_rate/2.0
+                    if max_patch_rate > high_size:
+                        decided_patch_rate = "3"
+                    elif max_patch_rate > medium_size:
+                        decided_patch_rate = "2"
+                    elif max_patch_rate > low_size:
+                        decided_patch_rate = "1"
+                    else:
+                        real_patch_number = []
+                        
+                    for tile in real_patch_number:
+                        real_patch_url.append(media_list[req_segment][decided_patch_rate][tile])
 
 
                     # patch_url=media_list[patch_dict[p_time][0]][bitrate_for_patch] ## float(round(play_time,1)
@@ -445,7 +465,8 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
 
     ## patch //Jerry
     # patch_thread = threading.Thread(target = get_patch_tile,args = (dash_player,dp_list,patch_dict,))
-    patch_thread = threading.Thread(target = get_patch_tile,args = (dash_player,dp_list,None,))
+    
+    patch_thread = threading.Thread(target = get_patch_tile,args = (dash_player,dp_list,dp_size,))
     patch_thread.start()     # Join at line 615
 
 
@@ -551,13 +572,13 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
         regular_size = []
 
         play_time_1 = round(dash_player.playback_timer.time_float(),1)
-        play_frame = math.floor(play_time_1*30)
+        play_frame = math.floor(play_time_1*30)+1
         total_request[segment]=list()
 
         regular_url.append(segment_path[0]) #segment_url
         regular_size.append(segment_size[0])
         total_request[segment].append(0)
-        if play_time_1 > 0.1:
+        if play_time_1 > 0.1 or dash_player.playback_state=="PLAY" :
             for number in gt_trace[play_frame]:
                 regular_url.append(segment_path[int(number)]) #segment_url  -1 or not ?? I think not
                 regular_size.append(segment_size[int(number)])
@@ -685,24 +706,6 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
 
     write_final_file(total_request,"./total_request.txt")
     write_final_file(current_request,"./current_request.txt")
-
-    # total = open("./total_request.txt","w")
-    # for item in total_request:
-    #     total.write(str(item))
-    #     for num in total_request[item]:
-    #         total.write(',')
-    #         total.write(str(num))
-    #     total.write('\n')
-    # total.close()
-    #
-    # current_ = open("./current_request.txt","w")
-    # for item in current_request:
-    #     current_.write(str(item))
-    #     for num in current_request[item]:
-    #         current_.write(',')
-    #         current_.write(str(num))
-    #     current_.write('\n')
-    # current_.close()
 
     print("average IO time: %f"%(total_d_time/60.0))
     if not download:

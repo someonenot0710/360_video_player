@@ -40,5 +40,5 @@ class StopWatch():
         :return: elapsed time
         """
         if self.running:
-            self.elapsed_time = time.time() - self.start_time
+            self.elapsed_time = time.time() - self.start_time 
         return self.elapsed_time
