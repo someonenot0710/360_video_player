@@ -105,6 +105,7 @@ class DashPlayer:
             # If the playback encounters buffering during the playback
             if self.playback_state == "BUFFERING":
                 if not buffering:
+                    print("in here?")
                     config_dash.LOG.info("Entering buffering stage after {} seconds of playback".format(
                         self.playback_timer.time()))
                     self.playback_timer.pause()
@@ -145,6 +146,8 @@ class DashPlayer:
 
             if self.playback_state == "PLAY":
                     # Check of the buffer has any segments
+                    print("now playtime: %d "%(self.playback_timer.time()))
+                    print("now available buffer: %d"%(self.buffer_length ))
                     if self.playback_timer.time() == self.playback_duration:
                         self.set_state("END")
                         self.log_entry("Play-End")
@@ -165,12 +168,14 @@ class DashPlayer:
                     self.log_entry(action="StillPlaying", bitrate=play_segment["bitrate"])
 
                     # Calculate time playback when the segment finishes
-                    future = self.playback_timer.time() + play_segment['playback_length']
+                    # future = self.playback_timer.time() + play_segment['playback_length'] # original
+                    future = float(self.playback_timer.time()) + float(play_segment['playback_length']) + float(config_dash.AVG_IO_TIME)# Jerry
 
                     # Start the playback
                     self.playback_timer.start()
                     flag=0
-                    while self.playback_timer.time() < future:
+                    # while self.playback_timer.time < future:
+                    while float(self.playback_timer.time_float()) < future:
                         # If playback hasn't started yet, set the playback_start_time
                         if not self.playback_start_time:
                             self.playback_start_time = time.time()
@@ -188,6 +193,12 @@ class DashPlayer:
                             self.log_entry("TheEnd")
                             return
                     else:
+                        ## for IO
+                        # self.playback_timer.pause()
+                        # time.sleep(config_dash.AVG_IO_TIME)
+                        # self.playback_timer.start()
+                        ##                        
+                        
                         self.buffer_length_lock.acquire()
                         self.buffer_length -= int(play_segment['playback_length'])
                         config_dash.LOG.debug("Decrementing buffer_length by {}. dash_buffer = {}".format(

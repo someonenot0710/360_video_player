@@ -39,7 +39,7 @@ import time
 import re
 import threading
 import dr_prediction_simple
-
+import subprocess
 
 import math
 '''
@@ -61,9 +61,13 @@ PLAYBACK = DEFAULT_PLAYBACK
 DOWNLOAD = False
 SEGMENT_LIMIT = None
 
+## SC add 
+USER=None
+current_user = None
+mpd_file = None
+global_download_times = 0.0
 
-dir_path='coaster_10x10/'
-
+MODE = None
 gt_trace = dict()
 
 
@@ -134,26 +138,24 @@ def id_generator(id_size=6):
 def download_segment(segment_url, dash_folder, segment_size):
     """ Module to download the segment """
     try:
+        global MODE
+        if MODE=="l":
+            quic_file = open("./experiment/quic_file.txt","a")
+            for url in segment_url:
+                quic_file.write(str(url)+"\n") # url_new
+            quic_file.close()
 
-        quic_file = open("./experiment/quic_file.txt","a")
-        # quic_file.write(str(frame_num)+": ")
-
-        for url in segment_url:
-            # url_new=str(url).replace("140.114.77.125","www.example.org")
-            quic_file.write(str(url)+"\n") # url_new
-        quic_file.close()
-
-        '''
         ## for request quic server
-        quic_file = open("/home/jerry/Desktop/for_quic/quic.txt","a")
-        for num in range(0,len(segment_url)):
-            url = str(segment_url[num])
-            # url_new=str(url).replace("140.114.77.125/coaster_10x10","www.example.org")
-            # url_new=url_new.replace("http","https")
-            quic_file.write(url+"\n") # url_new
-        quic_file.close()
+        elif MODE=="s":
+            quic_file = open("/home/jerry/Desktop/for_quic/quic.txt","a")
+            for num in range(0,len(segment_url)):
+                url = str(segment_url[num])
+                # url_new=str(url).replace("140.114.77.125/coaster_10x10","www.example.org")
+                # url_new=url_new.replace("http","https")
+                quic_file.write(url+"\n") # url_new
+            quic_file.close()
         ##
-        '''
+        
         s_size = sum(segment_size)
         return s_size,segment_url[0]
 
@@ -221,27 +223,22 @@ def print_representations(dp_object):
 def download_patch_segment(segment_url,t1,t2):
     """ Module to download the segment """
     try:
+        global MODE 
+        if MODE=="l":
+            quic_file = open("./experiment/quic_patch_file.txt","a")
+            for url in segment_url:
+                quic_file.write(str(url)+"\n")
+            quic_file.close()
 
-        quic_file = open("./experiment/quic_patch_file.txt","a")
-        # quic_file.write(str(t1)+","+str(t2)+"\n")
-        for url in segment_url:
-            # url_new=str(url).replace("140.114.77.125","www.example.org")
-            # quic_file.write(str(url)+"\n")
-            quic_file.write(str(url)+"\n")
-        # quic_file.write('\n')
-        quic_file.close()
-
-        '''
+        elif MODE=="s":
         ## for request quic server
-        quic_file = open("/home/jerry/Desktop/for_quic/quic_patch.txt","a")
-        for num in range(0,len(segment_url)):
-            url = str(segment_url[num])
-            # url_new=str(url).replace("140.114.77.125/coaster_10x10","www.example.org")
-            # url_new=url_new.replace("http","https")
-            quic_file.write(url+"\n")
-        quic_file.close()
+            quic_file = open("/home/jerry/Desktop/for_quic/quic_patch.txt","a")
+            for num in range(0,len(segment_url)):
+                url = str(segment_url[num])
+                quic_file.write(url+"\n")
+            quic_file.close()
         ##
-        '''
+        
         # s_size = sum(segment_size)
         # return s_size,segment_url[0]
 
@@ -253,16 +250,34 @@ def download_patch_segment(segment_url,t1,t2):
 
 
 def write_final_file(total_patch,file_name):
+    
+    global current_user
+    global mpd_file
+    user_dir = 'user'+str(current_user)+'/'
     dir_path = "./experiment/"
-    filename = dir_path+file_name
-    total_p = open(filename,"w")
-    for item in total_patch:
-        total_p.write(str(item))
-        for num in total_patch[item]:
-            total_p.write(",")
-            total_p.write(str(num))
-        total_p.write("\n")
-    total_p.close()
+    video_name = str(mpd_file.split("_")[1])+"/"
+    if not os.path.exists(dir_path+user_dir):
+        os.makedirs(dir_path+user_dir)
+    if not os.path.exists(dir_path+user_dir+video_name):
+        os.makedirs(dir_path+user_dir+video_name)    
+    
+    filename = dir_path+user_dir+video_name+file_name
+    
+    if file_name=="patch_arrive_url.txt":
+        total_p = open(filename,"w")
+        for item in total_patch:
+            f.write(str(item)+"\n")
+        total_p.close()        
+    
+    else:
+        total_p = open(filename,"w")
+        for item in total_patch:
+            total_p.write(str(item))
+            for num in total_patch[item]:
+                total_p.write(",")
+                total_p.write(str(num))
+            total_p.write("\n")
+        total_p.close()
 
 
 
@@ -271,31 +286,61 @@ def get_patch_tile(player,media_list,media_size):
     global bitrate_for_patch
     global total_request
     global global_segment_download_rate 
-    decided_patch_rate="1"
+    global global_download_times
+    global MODE
+
     period = config_dash.PREDICT_PERIOD
     next_period = float(config_dash.INITIAL_BUFFERING_COUNT-period) #0.5
     pre_time = float(config_dash.INITIAL_BUFFERING_COUNT-period*2)
+    
+    decided_patch_rate="1" # bitrate for patch tiles
+    # config_dash.TMP_PATCH_TIMES = global_download_times/period   
+    # print("times: %f "%(global_download_times/period) )
+    
     v_pre={'yaw': 0, 'pitch': 0}
     total_patch = dict ()
     terminate = False
     initial=True
+    have_request = False
+    patch_start_time = None
+    patch_time_record = dict()
+    record_arrive_tile = list()
+    real_patch_url = None
+    p_time = None
     
     while True:
+        config_dash.TMP_PATCH_TIMES = global_download_times/period   
+        # print("times: %f "%(global_download_times/period) )
+        if MODE=="s":
+            if not initial and have_request:
+                tt = [name.split('/')[-1] for name in real_patch_url]
+                d_file_name=[]
+                while not set(tt).issubset(set(d_file_name)) and timeit.default_timer()-patch_start_time < period:
+                    d_file_name=[]
+                    d_regular = open("/home/jerry/Desktop/for_quic/log.txt")
+                    for i, line in enumerate(d_regular):
+                        d_file_name.append(line.rstrip('\n'))
+                    d_regular.close()
+                for url in tt:
+                    if url in  d_file_name:
+                        record_arrive_tile.append(url)            
+        
         if terminate:
             break         
         if initial:
             time.sleep(next_period-0.1)
-        else:
+        elif not initial and not have_request:
             time.sleep(period-0.1)
+            
+        have_request = False
         while True:
             initial=False
             play_time = float(player.playback_timer.time_float())
-            # if play_time < float(config_dash.INITIAL_BUFFERING_COUNT-period):
-            #     break
-                # continue
-            # print(play_time)
+            
             if play_time>= 59.5:
-                write_final_file(total_patch,'./patch_request.txt')
+                write_final_file(total_patch,'patch_request.txt')
+                if MODE=="s":
+                    write_final_file(record_arrive_tile,'patch_arrive_url.txt')
                 terminate = True
                 break
 
@@ -317,17 +362,6 @@ def get_patch_tile(player,media_list,media_size):
                     patch_tile_url=dr_prediction_simple.get_request_tile(10,10,next_center)
                     patch_tile_url.sort()
 
-                    # total_patch[p_time]=patch_tile_url
-
-                    # dr_file = open("./quic_dr_file.txt","a")
-                    # dr_file.write(str(pre_time)+","+str(p_time)+": ")
-                    # for url in patch_tile_url:
-                    #     # url_new=str(url).replace("140.114.77.125","www.example.org")
-                    #     # quic_file.write(str(url)+"\n")
-                    #     dr_file.write(str(url)+" ")
-                    # dr_file.write('\n')
-                    # dr_file.close()
-
                     real_patch_number = [] ## store the numbers that have already been compared
                     real_patch_url = [] ## store the url that have already been compared
                     for tile in patch_tile_url:
@@ -346,15 +380,20 @@ def get_patch_tile(player,media_list,media_size):
                         medium_size += media_size[req_segment][str(2)][tile]
                         low_size += media_size[req_segment][str(1)][tile]
                     
-                    max_patch_rate = global_segment_download_rate/2.0
-                    if max_patch_rate > high_size:
+                    max_patch_rate = global_segment_download_rate*period
+                    
+                    if max_patch_rate > high_size and high_size>0:
                         decided_patch_rate = "3"
-                    elif max_patch_rate > medium_size:
+                        config_dash.TMP_PATCH_DOWNLOAD_TIMES = high_size/max_patch_rate
+                    elif max_patch_rate > medium_size and medium_size>0:
                         decided_patch_rate = "2"
-                    elif max_patch_rate > low_size:
+                        config_dash.TMP_PATCH_DOWNLOAD_TIMES = medium_size/max_patch_rate
+                    elif max_patch_rate > low_size and low_size>0:
                         decided_patch_rate = "1"
+                        config_dash.TMP_PATCH_DOWNLOAD_TIMES = low_size/max_patch_rate
                     else:
                         real_patch_number = []
+                        config_dash.TMP_PATCH_DOWNLOAD_TIMES = 0
                         
                     for tile in real_patch_number:
                         real_patch_url.append(media_list[req_segment][decided_patch_rate][tile])
@@ -367,8 +406,10 @@ def get_patch_tile(player,media_list,media_size):
                     #     for k in range(1,len(patch_dict[p_time])):
                     #         patch_tile_url.append(patch_url[int(patch_dict[p_time][k])-1])
                     if len(real_patch_url) >=1:
+                        have_request = True
+                        patch_start_time = timeit.default_timer();
                         download_patch_segment(real_patch_url,pre_time,p_time)
-
+                        
                     pre_time = p_time
                     next_period = next_period + period
                 break
@@ -441,7 +482,7 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
 
 
     average_dwn_time = 0
-    segment_files = []
+    # segment_files = []
     # For basic adaptation
     previous_segment_times = []
     recent_download_sizes = []
@@ -462,6 +503,7 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
     current_request = dict()  #store tiles that current request
 
     total_d_time=0.0 #Jerry
+    # download_time_record = dict() # Jerry
 
     ## patch //Jerry
     # patch_thread = threading.Thread(target = get_patch_tile,args = (dash_player,dp_list,patch_dict,))
@@ -472,6 +514,8 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
 
     global total_request ## record all segments that download
     global global_segment_download_rate # record previos download rate
+    global global_download_times # record previos download time
+    global MODE
     
     total_request = dict() ## Record tiles that request
 
@@ -488,14 +532,15 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
             if segment_number > int(SEGMENT_LIMIT):
                 config_dash.LOG.info("Segment limit reached")
                 break
-        print ("segment_number ={}".format(segment_number))
+        
         # print ("dp_object.video[bitrate].start={}".format(dp_object.video[bitrate].start))
 
         ##
         while not int(dash_player.buffer.qsize()) < config_dash.FULL_BUFFER_SIZE:
             None
         ##
-
+        print ("going to request segment_number ={}".format(segment_number))
+        
         if segment_number == dp_object.video[bitrate].start:
             current_bitrate = bitrates[0]
         else:
@@ -595,17 +640,6 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
         #     regular_size.append(segment_size[int(number)-1])
 
 
-
-
-        # print(regular_url)
-        # return None
-        # segment_url = urljoin(domain, segment_path)
-
-        # print(segment_url)
-
-        #print "segment url"
-        #print segment_url
-        # config_dash.LOG.info("{}: Segment URL = {}".format(playback_type.upper(), segment_url)) //Jerry
         if delay:
             delay_start = time.time()
             config_dash.LOG.info("SLEEPING for {}seconds ".format(delay*segment_duration))
@@ -633,22 +667,26 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
             config_dash.LOG.error("Unable to save segment %s" % e)
             return None
 
-        '''
-        ## for Server
-        tt = [name.split('/')[-1] for name in regular_url]
-        d_file_name=[]
-        while not set(tt).issubset(set(d_file_name)) :
+        if MODE=="s":
+            ## for Server
+            tt = [name.split('/')[-1] for name in regular_url]
             d_file_name=[]
-            d_regular = open("/home/jerry/Desktop/for_quic/log.txt")
-            for i, line in enumerate(d_regular):
-                d_file_name.append(line.rstrip('\n'))
-            d_regular.close()
-        ###
-        '''
-
+            while not set(tt).issubset(set(d_file_name)) :
+                d_file_name=[]
+                d_regular = open("/home/jerry/Desktop/for_quic/log.txt")
+                for i, line in enumerate(d_regular):
+                    d_file_name.append(line.rstrip('\n'))
+                d_regular.close()
+            ###
+        
+        # download_time_record[segment]=list()
+        # download_time_record[segment].append(start_time)
+        # download_time_record[segment].append(timeit.default_timer())
         segment_download_time = timeit.default_timer() - start_time
+        global_download_times = segment_download_time ## for patch
         total_d_time += segment_download_time
-        print("segment_download_time:%f "%(segment_download_time))
+        
+        # print("segment_download_time:%f "%(segment_download_time))
         global_segment_download_rate = segment_size/segment_download_time # Jerry calculate download rate
         
         previous_segment_times.append(segment_download_time)
@@ -682,7 +720,7 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
         dash_player.write(segment_info)
         # print('------------------------+++++++:  '+str(dash_player.buffer.qsize()))
 
-        segment_files.append(segment_filename)
+        # segment_files.append(segment_filename)
 
         # config_dash.LOG.info("Downloaded %s. Size = %s in %s seconds" % (
         #     segment_url, segment_size, str(segment_download_time)))
@@ -704,10 +742,15 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
     write_json()
     patch_thread.join() #Jerry
 
-    write_final_file(total_request,"./total_request.txt")
-    write_final_file(current_request,"./current_request.txt")
+    total_request['final']=list()
+    total_request['final'].append(str(config_dash.JSON_HANDLE['playback_info']['interruptions']))
+    write_final_file(total_request,"total_request.txt")
+    write_final_file(current_request,"current_request.txt")
 
+    # print(download_time_record[3])
+    
     print("average IO time: %f"%(total_d_time/60.0))
+    print(str(config_dash.JSON_HANDLE['playback_info']['interruptions']))
     if not download:
         clean_files(file_identifier)
 
@@ -827,6 +870,9 @@ def create_arguments(parser):
     parser.add_argument('-u', '--USER',
                         default="03",
                         help="which user trace ex: 05")
+    parser.add_argument('-s', '--MODE',
+                        default="",
+                        help="local:l server:s ")
 
 
 def main():
@@ -848,24 +894,24 @@ def main():
     # Retrieve the MPD files for the video
     # mpd_file = get_mpd(MPD) # download and return MPD file name
     # domain = get_domain_name(MPD)
+
     
+    
+    global current_user
+    global mpd_file
+    global MODE ## local:l or server:s
     ## do not download 
     mpd_file = MPD.split("/")[-1]
     domain = "http://140.114.77.170/"
+    print("now is playing %s"%(mpd_file))
     
     
     dp_object = DashPlayback()
-    # Reading the MPD file created
-    # print('file: '+mpd_file)
-    
-    
-
-
 
     # read ground truth gt_trace
     dir_path = './SC/gt_frame_num/'
     split_mpd = mpd_file.split("_")
-    
+    current_user = str(USER)
     user_file_name = split_mpd[1]+"_"+split_mpd[2]+"_user"+USER+"_segtile"
     # print(user_file_name)
     # user_file_name = "coaster_10x10_user"+USER+"_segtile"
@@ -876,7 +922,26 @@ def main():
         gt_trace[int(split[0])]=list()
         for j in range(1,len(split)):
             gt_trace[int(split[0])].append(int(split[j]))
+            
     # end read gt
+    
+    
+    ## regular and patch record file name url
+    
+    if MODE=="l":
+        patch_file_name = './experiment/quic_patch_file.txt'
+        regular_file_name = './experiment/quic_file.txt'
+    
+    elif MODE=="s":
+        patch_file_name = '/home/jerry/Desktop/for_quic/quic_patch_file.txt'
+        regular_file_name = '/home/jerry/Desktop/for_quic/quic_file.txt'    
+    
+    
+    if os.path.exists(patch_file_name):
+        os.rmdir(patch_file_name)
+    if os.path.exists(regular_file_name):
+        os.rmdir(regular_file_name)
+    ##
 
     # read_mpd.read_mpd(mpd_file, dp_object) # just test
     # return None
@@ -920,6 +985,20 @@ def main():
     else:
         config_dash.LOG.error("Unknown Playback parameter {}".format(PLAYBACK))
         return None
+        
     #
+    
+    
+    ##  when finish all , copy file to exact folder
+    user_dir = 'user'+str(current_user)+'/'
+    dir_path_ = "./experiment/"
+    video_name = str(mpd_file.split("_")[1])+"/"
+    folder = dir_path_+user_dir+video_name
+    cp1 = "mv "+ patch_file_name + " "+ folder
+    cp2 = "mv "+ regular_file_name+" "+ folder
+    os.system(cp1)
+    os.system(cp2)
+    
+    
 if __name__ == "__main__":
     sys.exit(main())
