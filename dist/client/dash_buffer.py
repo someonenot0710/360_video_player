@@ -147,6 +147,7 @@ class DashPlayer:
             if self.playback_state == "PLAY":
                     # Check of the buffer has any segments
                     print("now playtime: %d "%(self.playback_timer.time()))
+                    print("now playtime: %f "%(self.playback_timer.time_float()))
                     print("now available buffer: %d"%(self.buffer_length ))
                     if self.playback_timer.time() == self.playback_duration:
                         self.set_state("END")
@@ -168,14 +169,14 @@ class DashPlayer:
                     self.log_entry(action="StillPlaying", bitrate=play_segment["bitrate"])
 
                     # Calculate time playback when the segment finishes
-                    # future = self.playback_timer.time() + play_segment['playback_length'] # original
-                    future = float(self.playback_timer.time()) + float(play_segment['playback_length']) + float(config_dash.AVG_IO_TIME)# Jerry
+                    future = self.playback_timer.time() + play_segment['playback_length'] # original
+                    # future = float(self.playback_timer.time()) + float(play_segment['playback_length']) + float(config_dash.AVG_IO_TIME)# Jerry
 
                     # Start the playback
                     self.playback_timer.start()
                     flag=0
-                    # while self.playback_timer.time < future:
-                    while float(self.playback_timer.time_float()) < future:
+                    while self.playback_timer.time() < future:
+                    # while float(self.playback_timer.time_float()) < future:
                         # If playback hasn't started yet, set the playback_start_time
                         if not self.playback_start_time:
                             self.playback_start_time = time.time()

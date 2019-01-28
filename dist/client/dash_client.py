@@ -283,11 +283,11 @@ def write_final_file(total_patch,file_name):
 
 def get_patch_tile(player,media_list,media_size):
 
-    global bitrate_for_patch
+    # global bitrate_for_patch
     global total_request
     global global_segment_download_rate 
     global global_download_times
-    global MODE
+    # global MODE
 
     period = config_dash.PREDICT_PERIOD
     next_period = float(config_dash.INITIAL_BUFFERING_COUNT-period) #0.5
@@ -498,8 +498,8 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
     average_segment_sizes = netflix_rate_map = None
     netflix_state = "INITIAL"
     # Start playback of all the segments
-    global bitrate_for_patch
-    bitrate_for_patch = current_bitrate
+    # global bitrate_for_patch
+    # bitrate_for_patch = current_bitrate
     current_request = dict()  #store tiles that current request
 
     total_d_time=0.0 #Jerry
@@ -520,7 +520,7 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
     total_request = dict() ## Record tiles that request
 
     for segment_number, segment in enumerate(dp_list, dp_object.video[current_bitrate].start):
-        bitrate_for_patch = current_bitrate ## for patch
+        # bitrate_for_patch = current_bitrate ## for patch
 
         config_dash.LOG.info(" {}: Processing the segment {}".format(playback_type.upper(), segment_number))
         write_json()
@@ -655,9 +655,10 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
             #     if dash_player.do_request==True or segment<=config_dash.INITIAL_BUFFERING_COUNT:
             #         dash_player.do_request = False
             #         break
+            dash_player.playback_timer.pause()
             start_time = timeit.default_timer()
             segment_size, segment_filename = download_segment(regular_url, file_identifier, regular_size)
-
+            dash_player.playback_timer.start()
 
             # config_dash.LOG.info("{}: Downloaded segment {}".format(playback_type.upper(), segment_url))
 
