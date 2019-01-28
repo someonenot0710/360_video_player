@@ -313,8 +313,8 @@ def get_patch_tile(player,media_list,media_size):
         # print("times: %f "%(global_download_times/period) )
         if MODE=="s":
             if not initial and have_request:
-                seg_num=re.split('/|_|\n',real_patch_url[0])[-2]
-                check_dir = "/home/jerry/Desktop/for_quic/"+str(num)
+                seg_num=re.split(r'[/_.]',real_patch_url[0])[-2]
+                check_dir = "/home/jerry/Desktop/for_quic/"+str(seg_num)
                 tt = [name.split('/')[-1] for name in real_patch_url]
                 d_file_name=[]
                 while not set(tt).issubset(set(d_file_name)) and timeit.default_timer()-patch_start_time < period+0.1:
@@ -329,7 +329,7 @@ def get_patch_tile(player,media_list,media_size):
                         record_arrive_tile.append(url)
                     else:
                         print(url)
-                print(timeit.default_timer()-patch_start_time)                
+                # print(timeit.default_timer()-patch_start_time)                
         
         if terminate:
             break         
@@ -607,8 +607,8 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
                                                                           segment_download_time, current_bitrate)
 
 
-        segment_path = dp_list[segment][current_bitrate]
-        segment_size = dp_size[segment][current_bitrate]
+        segment_path = dp_list[segment][str(current_bitrate)]
+        segment_size = dp_size[segment][str(current_bitrate)]
 
 
         # print(segment_path)
