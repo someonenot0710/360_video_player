@@ -266,7 +266,7 @@ def write_final_file(total_patch,file_name):
     if file_name=="patch_arrive_url.txt":
         total_p = open(filename,"w")
         for item in total_patch:
-            f.write(str(item)+"\n")
+            total_p.write(str(item)+"\n")
         total_p.close()        
     
     else:
@@ -345,7 +345,8 @@ def get_patch_tile(player,media_list,media_size):
                 break
 
             elif play_time >= next_period: ##and play_time > float(config_dash.INITIAL_BUFFERING_COUNT-period):
-                p_time = float(round(play_time,1))
+                # p_time = float(round(play_time,1))
+                p_time = next_period
                 # print("***now buffer size***: %d"%(int(player.buffer.qsize())))
                 if int(player.buffer.qsize()) < config_dash.NOT_PATCH_SIZE and p_time<59.0:
                     pre_time = p_time
@@ -934,8 +935,8 @@ def main():
         regular_file_name = './experiment/quic_file.txt'
     
     elif MODE=="s":
-        patch_file_name = '/home/jerry/Desktop/for_quic/quic_patch_file.txt'
-        regular_file_name = '/home/jerry/Desktop/for_quic/quic_file.txt'    
+        patch_file_name = '/home/jerry/Desktop/for_quic/quic_patch.txt'
+        regular_file_name = '/home/jerry/Desktop/for_quic/quic.txt'    
     
     
     if os.path.exists(patch_file_name):
