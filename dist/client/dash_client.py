@@ -313,17 +313,23 @@ def get_patch_tile(player,media_list,media_size):
         # print("times: %f "%(global_download_times/period) )
         if MODE=="s":
             if not initial and have_request:
+                seg_num=re.split('/|_|\n',real_patch_url[0])[-2]
+                check_dir = "/home/jerry/Desktop/for_quic/"+str(num)
                 tt = [name.split('/')[-1] for name in real_patch_url]
                 d_file_name=[]
-                while not set(tt).issubset(set(d_file_name)) and timeit.default_timer()-patch_start_time < period:
+                while not set(tt).issubset(set(d_file_name)) and timeit.default_timer()-patch_start_time < period+0.1:
                     d_file_name=[]
-                    d_regular = open("/home/jerry/Desktop/for_quic/log.txt")
+                    # d_regular = open("/home/jerry/Desktop/for_quic/log.txt")
+                    d_regular = open(check_dir)
                     for i, line in enumerate(d_regular):
                         d_file_name.append(line.rstrip('\n'))
                     d_regular.close()
                 for url in tt:
                     if url in  d_file_name:
-                        record_arrive_tile.append(url)            
+                        record_arrive_tile.append(url)
+                    else:
+                        print(url)
+                print(timeit.default_timer()-patch_start_time)                
         
         if terminate:
             break         
@@ -408,8 +414,8 @@ def get_patch_tile(player,media_list,media_size):
                     #         patch_tile_url.append(patch_url[int(patch_dict[p_time][k])-1])
                     if len(real_patch_url) >=1:
                         have_request = True
-                        patch_start_time = timeit.default_timer();
                         download_patch_segment(real_patch_url,pre_time,p_time)
+                        patch_start_time = timeit.default_timer()
                         
                     pre_time = p_time
                     next_period = next_period + period
@@ -668,14 +674,18 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
         except IOError as e: #Jerry
             config_dash.LOG.error("Unable to save segment %s" % e)
             return None
-
+            
         if MODE=="s":
             ## for Server
+            # seg_num=re.split(',|_|\n',regular_url[0])[-2]
+            check_dir = "/home/jerry/Desktop/for_quic/"+str(segment)
+            print(check_dir)
             tt = [name.split('/')[-1] for name in regular_url]
             d_file_name=[]
             while not set(tt).issubset(set(d_file_name)) :
                 d_file_name=[]
-                d_regular = open("/home/jerry/Desktop/for_quic/log.txt")
+                # d_regular = open("/home/jerry/Desktop/for_quic/log.txt")
+                d_regular = open(check_dir)
                 for i, line in enumerate(d_regular):
                     d_file_name.append(line.rstrip('\n'))
                 d_regular.close()
