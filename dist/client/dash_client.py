@@ -138,7 +138,7 @@ def id_generator(id_size=6):
 def download_segment(segment_url, dash_folder, segment_size):
     """ Module to download the segment """
     try:
-        global MODE
+        # global MODE
         if MODE=="l":
             quic_file = open("./experiment/quic_file.txt","a")
             for url in segment_url:
@@ -223,7 +223,7 @@ def print_representations(dp_object):
 def download_patch_segment(segment_url,t1,t2):
     """ Module to download the segment """
     try:
-        global MODE 
+        # global MODE 
         if MODE=="l":
             quic_file = open("./experiment/quic_patch_file.txt","a")
             for url in segment_url:
@@ -522,7 +522,7 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
     global total_request ## record all segments that download
     global global_segment_download_rate # record previos download rate
     global global_download_times # record previos download time
-    global MODE
+    # global MODE
     
     total_request = dict() ## Record tiles that request
 
@@ -679,7 +679,7 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
             ## for Server
             # seg_num=re.split(',|_|\n',regular_url[0])[-2]
             check_dir = "/home/jerry/Desktop/for_quic/"+str(segment)
-            print(check_dir)
+            # print(check_dir)
             tt = [name.split('/')[-1] for name in regular_url]
             d_file_name=[]
             while not set(tt).issubset(set(d_file_name)) :
@@ -911,7 +911,7 @@ def main():
     
     global current_user
     global mpd_file
-    global MODE ## local:l or server:s
+    # global MODE ## local:l or server:s
     ## do not download 
     mpd_file = MPD.split("/")[-1]
     domain = "http://140.114.77.170/"
