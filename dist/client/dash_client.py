@@ -526,6 +526,7 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
     
     total_request = dict() ## Record tiles that request
 
+    v_pre = {'yaw': 0, 'pitch': 0} ## DR
     for segment_number, segment in enumerate(dp_list, dp_object.video[current_bitrate].start):
         # bitrate_for_patch = current_bitrate ## for patch
 
@@ -630,30 +631,44 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
         regular_url.append(segment_path[0]) #segment_url
         regular_size.append(segment_size[0])
         total_request[segment].append(0)
+         
+         # next_center , v_pre = dr_prediction_simple.dr_prediction(pre_time,p_time,v_pre)
+         # patch_tile_url=dr_prediction_simple.get_request_tile(10,10,next_center)
+         # patch_tile_url.sort()
+                
         if play_time_1 > 0.1 or dash_player.playback_state=="PLAY" :
-            for number in gt_trace[play_frame]:
+            length = float(segment)-play_time_1
+            now_time = dash_player.playback_timer.time_float()
+            next_center , v_pre = dr_prediction_simple.dr_prediction(pre_time,now_time,v_pre,length)
+            patch_tile_url=dr_prediction_simple.get_request_tile(10,10,next_center)
+            patch_tile_url.sort()
+            pre_time = now_time
+            # for number in gt_trace[play_frame]:
+            for number in patch_tile_url:
                 regular_url.append(segment_path[int(number)]) #segment_url  -1 or not ?? I think not
                 regular_size.append(segment_size[int(number)])
                 total_request[segment].append(int(number))
         else :
+            pre_time = 0.0
             for number in gt_trace[(segment-1)*30+1]:
                 regular_url.append(segment_path[int(number)]) #segment_url
                 regular_size.append(segment_size[int(number)])
                 total_request[segment].append(int(number))
 
         current_request[segment]=total_request[segment] #regular_url # store tiles that current request
+        
         # for number in patch[segment]:
         #     regular_url.append(segment_path[int(number)-1]) #segment_url
         #     regular_size.append(segment_size[int(number)-1])
 
 
-        if delay:
-            delay_start = time.time()
-            config_dash.LOG.info("SLEEPING for {}seconds ".format(delay*segment_duration))
-            while time.time() - delay_start < (delay * segment_duration):
-                time.sleep(1)
-            delay = 0
-            config_dash.LOG.debug("SLEPT for {}seconds ".format(time.time() - delay_start))
+        # if delay:
+        #     delay_start = time.time()
+        #     config_dash.LOG.info("SLEEPING for {}seconds ".format(delay*segment_duration))
+        #     while time.time() - delay_start < (delay * segment_duration):
+        #         time.sleep(1)
+        #     delay = 0
+        #     config_dash.LOG.debug("SLEPT for {}seconds ".format(time.time() - delay_start))
 
 
         start_time = None
@@ -925,6 +940,7 @@ def main():
     split_mpd = mpd_file.split("_")
     current_user = str(USER)
     user_file_name = split_mpd[1]+"_"+split_mpd[2]+"_user"+USER+"_segtile"
+    dr_prediction_simple.init_file(split_mpd[1],USER) ## video name and user
     # print(user_file_name)
     # user_file_name = "coaster_10x10_user"+USER+"_segtile"
     trace = open(dir_path+user_file_name)
