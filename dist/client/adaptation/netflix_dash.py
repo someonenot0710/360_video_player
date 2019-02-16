@@ -80,11 +80,11 @@ def netflix_dash(bitrates, dash_player, segment_download_rate, curr_bitrate, ave
     """
     Netflix rate adaptation module
     """
-    available_video_segments = dash_player.buffer.qsize() - config_dash.NETFLIX_INITIAL_BUFFER #dash_player.initial_buffer
-    
+    available_video_segments = float(dash_player.buffer.qsize()) - float(config_dash.NETFLIX_INITIAL_BUFFER) #dash_player.initial_buffer
+    available_video_segments = float(available_video_segments)-float(config_dash.DELAY_FOR_REGULAR)
     ## for patch
-    available_video_segments = float(available_video_segments - config_dash.TMP_PATCH_TIMES*config_dash.TMP_PATCH_DOWNLOAD_TIMES)
-    
+    # available_video_segments = float(available_video_segments - config_dash.TMP_PATCH_TIMES*config_dash.TMP_PATCH_DOWNLOAD_TIMES)
+
     # print("---netflix buffer count---:   " +str(available_video_segments))
     if not (curr_bitrate or rate_map or state):
         rate_map = get_rate_map(bitrates)

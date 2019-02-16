@@ -148,7 +148,9 @@ class DashPlayer:
                     # Check of the buffer has any segments
                     # print("now playtime: %d "%(self.playback_timer.time()))
                     print("now playtime: %f "%(self.playback_timer.time_float()))
-                    print("now available buffer: %d"%(self.buffer_length ))
+                    # print("now available buffer: %d"%(self.buffer_length ))
+
+
                     if self.playback_timer.time() == self.playback_duration:
                         self.set_state("END")
                         self.log_entry("Play-End")
@@ -198,8 +200,8 @@ class DashPlayer:
                         # self.playback_timer.pause()
                         # time.sleep(config_dash.AVG_IO_TIME)
                         # self.playback_timer.start()
-                        ##                        
-                        
+                        ##
+
                         self.buffer_length_lock.acquire()
                         self.buffer_length -= int(play_segment['playback_length'])
                         config_dash.LOG.debug("Decrementing buffer_length by {}. dash_buffer = {}".format(
