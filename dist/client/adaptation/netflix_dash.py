@@ -54,6 +54,7 @@ def get_rate_netflix(bitrates, current_buffer_occupancy, buffer_size=config_dash
     except ValueError:
         config_dash.LOG.error("Unable to sort the bitrates. Assuming they are sorted")
     # Calculate the current buffer occupancy percentage
+#    print(bitrates)
     try:
         buffer_percentage = current_buffer_occupancy/buffer_size
         # print (buffer_percentage)
@@ -63,7 +64,7 @@ def get_rate_netflix(bitrates, current_buffer_occupancy, buffer_size=config_dash
     # Selecting the next bitrate based on the rate map
     if not rate_map:
         rate_map = get_rate_map(bitrates)
-    if buffer_percentage <= config_dash.NETFLIX_RESERVOIR:
+    if buffer_percentage < config_dash.NETFLIX_RESERVOIR:
         next_bitrate = bitrates[0]
     elif buffer_percentage >= config_dash.NETFLIX_CUSHION:
         next_bitrate = bitrates[-1]
@@ -73,6 +74,7 @@ def get_rate_netflix(bitrates, current_buffer_occupancy, buffer_size=config_dash
             if marker < buffer_percentage:
                 break
             next_bitrate = rate_map[marker]
+#    print("buffer_percentage:%f , selected bitrate: %f " %(buffer_percentage,next_bitrate))
     return next_bitrate
 
 
@@ -80,7 +82,8 @@ def netflix_dash(bitrates, dash_player, segment_download_rate, curr_bitrate, ave
     """
     Netflix rate adaptation module
     """
-    available_video_segments = float(dash_player.buffer.qsize()) - float(config_dash.NETFLIX_INITIAL_BUFFER) #dash_player.initial_buffer
+#    available_video_segments = float(dash_player.buffer.qsize()) - float(config_dash.NETFLIX_INITIAL_BUFFER) #dash_player.initial_buffer
+    available_video_segments = float(dash_player.buffer.qsize())
     available_video_segments = float(available_video_segments)-float(config_dash.DELAY_FOR_REGULAR)
     ## for patch
     # available_video_segments = float(available_video_segments - config_dash.TMP_PATCH_TIMES*config_dash.TMP_PATCH_DOWNLOAD_TIMES)
@@ -105,17 +108,20 @@ def netflix_dash(bitrates, dash_player, segment_download_rate, curr_bitrate, ave
             else :
                 next_bitrate = bitrates[bitrates.index(curr_bitrate)+1]
         # if the current buffer occupancy is less that NETFLIX_INITIAL_BUFFER, then do NOY use rate map
-        if not available_video_segments < config_dash.NETFLIX_INITIAL_BUFFER:
+        if not available_video_segments < config_dash.NETFLIX_INITIAL_BUFFER-1:
             # get the next bitrate based on the ratemap
-
+            
             rate_map_next_bitrate = get_rate_netflix(bitrates, available_video_segments,
                                                      config_dash.NETFLIX_BUFFER_SIZE, rate_map)
             # Consider the rate map only if the rate map gives a higher value.
             # Once the rate mao returns a higher value exit the 'INITIAL' stage
-            # print("rate_map_next_bitrate------------: "+str(rate_map_next_bitrate)+'---------: '+str(next_bitrate))
+            # print("rate_map_next_bitrate------------: "+str(rate_map_next_bitrate)+'---------: '+str(next_bitrate)) 
+            '''
             if int(rate_map_next_bitrate) > int(next_bitrate):
                 next_bitrate = rate_map_next_bitrate
                 state = "RUNNING"
+            '''
+            state = "RUNNING"
     else:
         next_bitrate = get_rate_netflix(bitrates, available_video_segments, config_dash.NETFLIX_BUFFER_SIZE, rate_map)
     return next_bitrate, rate_map, state

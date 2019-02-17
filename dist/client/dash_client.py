@@ -558,7 +558,7 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
         # print ("dp_object.video[bitrate].start={}".format(dp_object.video[bitrate].start))
 
         ##
-        print("buffer size %f "%(int(dash_player.buffer.qsize())))
+#        print("buffer size %f "%(int(dash_player.buffer.qsize())))
         while not int(dash_player.buffer.qsize()) <= config_dash.FULL_BUFFER_SIZE -1 :
             None
         ##
