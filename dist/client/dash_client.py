@@ -558,7 +558,8 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
         # print ("dp_object.video[bitrate].start={}".format(dp_object.video[bitrate].start))
 
         ##
-        while not int(dash_player.buffer.qsize()) <= config_dash.FULL_BUFFER_SIZE:
+        print("buffer size %f "%(int(dash_player.buffer.qsize())))
+        while not int(dash_player.buffer.qsize()) <= config_dash.FULL_BUFFER_SIZE -1 :
             None
         ##
         print ("going to request segment_number ={}".format(segment_number))
@@ -594,7 +595,8 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
                 config_dash.LOG.info("Playback is NETFLIX")
                 # Calculate the average segment sizes for each bitrate
                 if not average_segment_sizes:
-                    average_segment_sizes = get_average_segment_sizes(dp_object) # change get_average_segment_sizes
+                    average_segment_sizes = get_average_segment_sizes(dp_size)
+                    # average_segment_sizes = get_average_segment_sizes(dp_object) # change get_average_segment_sizes
                 if segment_number <= len(dp_list) - 1 + dp_object.video[bitrate].start: # Original < Jerry
                     try:
                         if segment_size and segment_download_time:
@@ -623,7 +625,7 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
 
 
         segment_path = dp_list[segment][str(current_bitrate)]
-        segment_size = dp_size[segment][str(current_bitrate)]
+        segment_size_all = dp_size[segment][str(current_bitrate)]
 
 
         # print(segment_path)
@@ -645,7 +647,7 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
         # current_request[segment]=list()
 
         regular_url.append(segment_path[0]) #segment_url
-        regular_size.append(segment_size[0])
+        regular_size.append(segment_size_all[0])
         total_request[segment].append(0)
 
          # next_center , v_pre = dr_prediction_simple.dr_prediction(pre_time,p_time,v_pre)
@@ -664,14 +666,14 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
             # for number in gt_trace[play_frame]:
             for number in patch_tile_url:
                 regular_url.append(segment_path[int(number)]) #segment_url  -1 or not ?? I think not
-                regular_size.append(segment_size[int(number)])
+                regular_size.append(segment_size_all[int(number)])
                 total_request[segment].append(int(number))
                 # current_request[segment].append(int(number))
         else :
             pre_time = 0.0
             for number in gt_trace[(segment-1)*30+1]:
                 regular_url.append(segment_path[int(number)]) #segment_url
-                regular_size.append(segment_size[int(number)])
+                regular_size.append(segment_size_all[int(number)])
                 total_request[segment].append(int(number))
                 # current_request[segment].append(int(number))
 
@@ -828,16 +830,27 @@ def get_average_segment_sizes(dp_object):
     :return: A dictionary of aveage segment sizes for each bitrate
     """
     average_segment_sizes = dict()
-    for bitrate in dp_object.video:
-        # segment_sizes = dp_object.video[bitrate].segment_sizes
-        # segment_sizes = [float(i) for i in segment_sizes]
-        segment_sizes = dp_object.video[bitrate].url_size
-        segment_sizes = [float(sum(i)) for i in segment_sizes]
-        try:
-            average_segment_sizes[bitrate] = sum(segment_sizes)/len(segment_sizes)
-        except ZeroDivisionError:
-            average_segment_sizes[bitrate] = 0
-    config_dash.LOG.info("The avearge segment size for is {}".format(average_segment_sizes.items()))
+
+
+    for i in range(1,4):
+        total_size = 0
+        for j in range(1,61):
+            size =float(sum(dp_object[j][str(i)]))
+            # size = [float(sum(k)) for k in dp_object[j][str(i)]]
+            total_size +=size
+        average_segment_sizes[str(i)]= total_size/60.0
+
+    # for bitrate in dp_object.video:
+    #     # segment_sizes = dp_object.video[bitrate].segment_sizes
+    #     # segment_sizes = [float(i) for i in segment_sizes]
+    #     segment_sizes = dp_object.video[bitrate].url_size
+    #     segment_sizes = [float(sum(i)) for i in segment_sizes]
+    #     try:
+    #         average_segment_sizes[bitrate] = sum(segment_sizes)/len(segment_sizes)
+    #     except ZeroDivisionError:
+    #         average_segment_sizes[bitrate] = 0
+    # config_dash.LOG.info("The avearge segment size for is {}".format(average_segment_sizes.items()))
+
     return average_segment_sizes
 
 

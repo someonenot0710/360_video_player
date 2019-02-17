@@ -23,10 +23,9 @@ from time import strftime
 import os
 
 #### for SC_experiment
-FULL_BUFFER_SIZE = 1
+FULL_BUFFER_SIZE = 2
 PREDICT_PERIOD = 0.5
-ASSUME_REQUEST_TIME=3
-ASSUME_DOWNLOAD_TIME=0.1
+
 NOT_PATCH_SIZE=1
 INITIAL_BUFFERING_COUNT = 2  # original 1  initial_bufferrrrrr
 AVG_IO_TIME = 0.01
@@ -34,12 +33,18 @@ AVG_IO_TIME = 0.01
 TMP_PATCH_TIMES=0 #
 TMP_PATCH_DOWNLOAD_TIMES=0.0
 
-NETFLIX_BUFFER_SIZE = 5
+NETFLIX_BUFFER_SIZE = FULL_BUFFER_SIZE
 
 PATCH_DELAY = 0.0
 DELAY_FOR_REGULAR=0.0
 
 
+NETFLIX_RESERVOIR = 0.3
+NETFLIX_CUSHION = 0.9
+
+
+ASSUME_REQUEST_TIME=3
+ASSUME_DOWNLOAD_TIME=0.1
 ######
 
 
@@ -101,8 +106,7 @@ MAX_BUFFER_SIZE = None
 # ---------------------------------------------------
 # Constants for the Netflix Buffering scheme adaptation/netflix_buffer.py
 # Constants is terms of buffer occupancy PERCENTAGE(%)
-NETFLIX_RESERVOIR = 0.1
-NETFLIX_CUSHION = 0.9
+
 # Buffer Size in Number of segments 240/4
 
 NETFLIX_INITIAL_BUFFER = 1
