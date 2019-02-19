@@ -259,7 +259,7 @@ def write_final_file(total_patch,file_name):
 
     global current_user
     global mpd_file
-    user_dir = 'user'+str(current_user)+'/'
+    user_dir = 'user'+str(current_user)+'_'+PROTOCOL+"/"
     dir_path = "./experiment/"
     video_name = str(mpd_file.split("_")[1])+"/"
     if not os.path.exists(dir_path+user_dir):
@@ -1098,11 +1098,10 @@ def main():
         config_dash.LOG.error("Unknown Playback parameter {}".format(PLAYBACK))
         return None
 
-    #
 
 
     ##  when finish all , copy file to exact folder
-    user_dir = 'user'+str(current_user)+'/'
+    user_dir = 'user'+str(current_user)+'_'+PROTOCOL+'/'
     dir_path_ = "./experiment/"
     video_name = str(mpd_file.split("_")[1])+"/"
     folder = dir_path_+user_dir+video_name
