@@ -44,8 +44,8 @@ import subprocess
 import math
 
 
-from hyper import HTTPConnection
-from hyper.contrib import HTTP20Adapter
+#from hyper import HTTPConnection
+#from hyper.contrib import HTTP20Adapter
 
 '''
 try:
@@ -503,10 +503,10 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
             segment_url=[]
             segment_size=[]
             for track in range(0,len(media_urls)): # track numbers
-                if PROTOCOL=="h1":
-                    add_domain = "http://140.114.77.170/pv19/"+str(media_urls[track][segment_count-1])
-                elif PROTOCOL=="h2":
-                    add_domain = "https://nosl15.cs.nthu.edu.tw/api/download/"+str(media_urls[track][segment_count-1])+"?"
+                #if PROTOCOL=="h1":
+                #    add_domain = "http://140.114.77.170/pv19/"+str(media_urls[track][segment_count-1])
+                if PROTOCOL=="h1" or PROTOCOL=="h2":
+                    add_domain = "https://nosl15.cs.nthu.edu.tw/api/download/"+str(media_urls[track][segment_count-1])
                 else:
                     add_domain = "https://www.example.org/"+str(media_urls[track][segment_count-1])
                 segment_url.append(add_domain) #media_urls[track][segment_count-1]
@@ -730,13 +730,13 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
         except IOError as e: #Jerry
             config_dash.LOG.error("Unable to save segment %s" % e)
             return None
-
+        '''
         if PROTOCOL == "h1":
             download_http(regular_url)
         elif PROTOCOL == "h2":
             # print(regular_url)
             download_http2(regular_url)
-
+        '''
         if MODE=="s":
             ## for Server
             # seg_num=re.split(',|_|\n',regular_url[0])[-2]

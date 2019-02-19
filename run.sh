@@ -5,15 +5,16 @@ rm experiment/*
 
 #dash_diving_10x10_qp28_new.mpd
 
-#python dist/client/dash_client.py -m http://140.114.77.125/mpd_with_size/dash_diving_10x10_qp28_new.mpd -p 'netflix' -u 20 -s l
+python3 dist/client/dash_client.py -m http://140.114.77.125/mpd_with_size/dash_diving_10x10_qp28_new.mpd -p 'netflix' -u 30 -s s -pro h2
 
-finish='false'
 
-while [ $finish == 'false' ]
-do
-rm experiment/*
-finish='true'
-gtimeout 70s python dist/client/dash_client.py -m http://140.114.77.125/mpd_with_size/dash_drive_10x10_qp28_new.mpd -p 'netflix' -u 35 -s l || finish='false'
-done
+#finish='false'
+#while [ $finish == 'false' ]
+#do
+#rm experiment/*
+#finish='true'
+#gtimeout 70s python dist/client/dash_client.py -m http://140.114.77.125/mpd_with_size/dash_drive_10x10_qp28_new.mpd -p 'netflix' -u 35 -s l || finish='false'
+#done
 
-echo "finish video"
+#echo "finish video"
+
