@@ -143,6 +143,7 @@ class DashPlayer:
                     config_dash.JSON_HANDLE['playback_info']['start_time']=time.asctime( time.localtime(time.time()))
                     self.set_state("PLAY")
                     self.log_entry("InitialBuffering-Play")
+                    print("start play")
 
             if self.playback_state == "PLAY":
                     # Check of the buffer has any segments

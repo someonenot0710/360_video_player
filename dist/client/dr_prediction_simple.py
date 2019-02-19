@@ -119,6 +119,11 @@ def dr_prediction(pre_time,now_time,v_pre={'yaw': 0, 'pitch': 0},length=0):
     time1 = int(pre_time*30)+1 #frame1
     time2 = int(now_time*30)+1 #frame2
     prediction_time = now_time - pre_time
+    
+    if float(prediction_time) == 0.0:
+        prediction_time = 0.001
+    
+    
     if length ==0:
         length = prediction_time
 #     print(length)
@@ -166,6 +171,12 @@ def dr_prediction_acceleration(pre_time,now_time,v_pre={'yaw': 0, 'pitch': 0},a_
     time1 = int(pre_time*30)+1 #frame1
     time2 = int(now_time*30)+1 #frame2
     prediction_time = now_time - pre_time
+
+    # print("predict")
+    # print(prediction_time)
+    # if float(prediction_time) == 0.0:
+    #     prediction_time = 0.001
+
     if length ==0:
         length = prediction_time
 
@@ -216,9 +227,9 @@ def get_width_circle(diameter,center_pitch,other_pitch):
     radius = diameter/2.0
 
     ## approach 1
-    r_tmp = radius * math.cos(math.asin((other_pitch-center_pitch)/radius))
+    # r_tmp = radius * math.cos(math.asin((other_pitch-center_pitch)/radius))
     ## approach 2
-    #     r_tmp_s = radius * math.sqrt(1-math.pow(1/math.tan(math.radians(radius)),2)*math.pow(math.tan(math.radians(other_pitch-center_pitch)),2))
+    r_tmp = radius * math.sqrt(1-math.pow(1/math.tan(math.radians(radius)),2)*math.pow(math.tan(math.radians(other_pitch-center_pitch)),2))
 
     #   print("tmp:%f , tmp_s:%f"%(r_tmp,r_tmp_s))
 

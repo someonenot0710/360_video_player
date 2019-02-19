@@ -15,11 +15,12 @@ Testing:
 from __future__ import division
 import read_mpd
 #import urlparse
-from urllib.parse import urlparse
-from urllib.parse import urljoin
-import urllib
-import urllib.error
-import urllib.request
+# from urllib.parse import urlparse
+# from urllib.parse import urljoin
+# import urllib
+# import urllib.error
+# import urllib.request
+import requests
 import random
 import os
 import sys
@@ -40,8 +41,12 @@ import re
 import threading
 import dr_prediction_simple
 import subprocess
-
 import math
+
+
+from hyper import HTTPConnection
+from hyper.contrib import HTTP20Adapter
+
 '''
 try:
     WindowsError
@@ -68,6 +73,7 @@ mpd_file = None
 global_download_times = 0.0
 
 MODE = None
+PROTOCOL = None
 gt_trace = dict()
 
 
@@ -83,7 +89,7 @@ class DashPlayback:
         self.audio = dict()
         self.video = dict()
 
-
+'''
 def get_mpd(url):
     """ Module to download the MPD from the URL and save it to file"""
     print (url)
@@ -110,7 +116,7 @@ def get_mpd(url):
     mpd_file_handle.close()
     config_dash.LOG.info("Downloaded the MPD file {}".format(mpd_file))
     return mpd_file
-
+'''
 
 def get_bandwidth(data, duration):
     """ Module to determine the bandwidth for a segment
@@ -404,10 +410,18 @@ def get_patch_tile(player,media_list,media_size):
                         # print("in_decision")
                         # print("throughput:%f --- low_size:%f "%(max_patch_rate,low_size))
                         decided_patch_rate = "1"
+                        index = 0
+                        real_patch_number.sort()
                         while low_size > max_patch_rate and low_size>0:
-                            r_num = random.randint(0,len(real_patch_number)-1)
-                            low_size = low_size - media_size[req_segment][str(1)][real_patch_number[r_num]]
-                            del real_patch_number[r_num]
+                            low_size = low_size - media_size[req_segment][str(1)][real_patch_number[index]]
+                            del real_patch_number[index]
+                            if index == 0:
+                                index = len(real_patch_number)-1
+                            else:
+                                index=0
+                            # r_num = random.randint(0,len(real_patch_number)-1)
+                            # low_size = low_size - media_size[req_segment][str(1)][real_patch_number[r_num]]
+                            # del real_patch_number[r_num]
 
                         # real_patch_number = []
                         # config_dash.TMP_PATCH_DOWNLOAD_TIMES = 0
@@ -489,7 +503,12 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
             segment_url=[]
             segment_size=[]
             for track in range(0,len(media_urls)): # track numbers
-                add_domain = "https://www.example.org/"+str(media_urls[track][segment_count-1])
+                if PROTOCOL=="h1":
+                    add_domain = "http://140.114.77.170/pv19/"+str(media_urls[track][segment_count-1])
+                elif PROTOCOL=="h2":
+                    add_domain = "https://nosl15.cs.nthu.edu.tw/api/download/"+str(media_urls[track][segment_count-1])+"?"
+                else:
+                    add_domain = "https://www.example.org/"+str(media_urls[track][segment_count-1])
                 segment_url.append(add_domain) #media_urls[track][segment_count-1]
                 segment_size.append(media_size[track][segment_count-1])
             dp_list[segment_count][bitrate] = segment_url # segment_url = track_1_x~track_200_x  a segment_url represent a segment with # of track
@@ -527,10 +546,9 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
     # download_time_record = dict() # Jerry
 
     ## patch //Jerry
-    # patch_thread = threading.Thread(target = get_patch_tile,args = (dash_player,dp_list,patch_dict,))
 
-    patch_thread = threading.Thread(target = get_patch_tile,args = (dash_player,dp_list,dp_size,))
-    patch_thread.start()     # Join at line 615
+    # patch_thread = threading.Thread(target = get_patch_tile,args = (dash_player,dp_list,dp_size,))
+    # patch_thread.start()     # Join at line 615
 
 
     global total_request ## record all segments that download
@@ -699,18 +717,25 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
             #     if dash_player.do_request==True or segment<=config_dash.INITIAL_BUFFERING_COUNT:
             #         dash_player.do_request = False
             #         break
-            dash_player.playback_timer.pause()
+            if segment > config_dash.INITIAL_BUFFERING_COUNT and dash_player.playback_state =="PLAY":
+                dash_player.playback_timer.pause()
             start_time = timeit.default_timer()
             segment_size, segment_filename = download_segment(regular_url, file_identifier, regular_size)
-            dash_player.playback_timer.start()
+            if segment > config_dash.INITIAL_BUFFERING_COUNT and dash_player.playback_state =="PLAY":
+                dash_player.playback_timer.start()
 
             # config_dash.LOG.info("{}: Downloaded segment {}".format(playback_type.upper(), segment_url))
 
             # return None # Jerry
-
         except IOError as e: #Jerry
             config_dash.LOG.error("Unable to save segment %s" % e)
             return None
+
+        if PROTOCOL == "h1":
+            download_http(regular_url)
+        elif PROTOCOL == "h2":
+            # print(regular_url)
+            download_http2(regular_url)
 
         if MODE=="s":
             ## for Server
@@ -797,7 +822,7 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
             break
 
     write_json()
-    patch_thread.join() #Jerry
+    # patch_thread.join() #Jerry
 
     total_request['final']=list()
     total_request['final'].append(str(config_dash.JSON_HANDLE['playback_info']['interruptions']))
@@ -810,6 +835,21 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
     print(str(config_dash.JSON_HANDLE['playback_info']['interruptions']))
     if not download:
         clean_files(file_identifier)
+
+
+
+
+def download_http(file_name):
+    for url in file_name:
+        r = requests.get(url)
+    #return None
+def download_http2(file_name):
+    # print(file_name)
+    s = requests.Session()
+    domain="https://nosl15.cs.nthu.edu.tw"
+    s.mount(domain, HTTP20Adapter())
+    for url in file_name:
+        r = s.get(url)
 
 
 def get_segment_sizes(dp_object, segment_number):
@@ -941,6 +981,9 @@ def create_arguments(parser):
     parser.add_argument('-s', '--MODE',
                         default="",
                         help="local:l server:s ")
+    parser.add_argument('-pro', '--PROTOCOL',
+                        default="q",
+                        help="http1.1-> h  other->q")
 
 
 def main():
