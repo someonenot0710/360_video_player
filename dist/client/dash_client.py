@@ -74,6 +74,7 @@ global_download_times = 0.0
 
 MODE = None
 PROTOCOL = None
+URGENT = None
 gt_trace = dict()
 
 
@@ -546,9 +547,9 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
     # download_time_record = dict() # Jerry
 
     ## patch //Jerry
-
-    # patch_thread = threading.Thread(target = get_patch_tile,args = (dash_player,dp_list,dp_size,))
-    # patch_thread.start()     # Join at line 615
+    if URGENT=="y":
+        patch_thread = threading.Thread(target = get_patch_tile,args = (dash_player,dp_list,dp_size,))
+        patch_thread.start()     # Join at line 615
 
 
     global total_request ## record all segments that download
@@ -822,7 +823,8 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
             break
 
     write_json()
-    # patch_thread.join() #Jerry
+    if URGENT=="y":
+        patch_thread.join() #Jerry
 
     total_request['final']=list()
     total_request['final'].append(str(config_dash.JSON_HANDLE['playback_info']['interruptions']))
@@ -984,6 +986,10 @@ def create_arguments(parser):
     parser.add_argument('-pro', '--PROTOCOL',
                         default="q",
                         help="http1.1-> h  other->q")
+    parser.add_argument('-urgent', '--URGENT',
+                        default="n",
+                        help="urgent-->y no-->n")
+
 
 
 def main():
@@ -1057,7 +1063,7 @@ def main():
 
     # read_mpd.read_mpd(mpd_file, dp_object) # just test
     # return None
-    mpd_dir = "mpd_with_size/"
+    mpd_dir = "mpd_new/"
     mpd_28 = mpd_dir + mpd_file
     mpd_32 = mpd_dir+mpd_file.replace("28", "32");
     mpd_36 = mpd_dir+mpd_file.replace("28", "36");

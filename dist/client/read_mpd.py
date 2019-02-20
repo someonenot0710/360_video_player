@@ -76,7 +76,7 @@ class MediaObject(object):
 
 
 class DashPlayback:
-    """ 
+    """
     Audio[bandwidth] : {duration, url_list}
     Video[bandwidth] : {duration, url_list}
     """
@@ -115,10 +115,10 @@ def get_url_list(media, segment_duration,  playback_duration, bitrate):
         # media.url_list = URL_LIST
         media.url_list = URL_LIST_dict[bitrate] #Jerry
         media.url_size = URL_SIZE_dict[bitrate]
-        
+
     #print media.url_list
     return media
-        
+
 def read_mpd(mpd_file, dashplayback,bandwidth): # filename , empty class
     # print('In read mpd: '+mpd_file)
     # """ Module to read the MPD file"""
@@ -139,7 +139,7 @@ def read_mpd(mpd_file, dashplayback,bandwidth): # filename , empty class
         if MIN_BUFFER_TIME in root.attrib:
             dashplayback.min_buffer_time = get_playback_time(root.attrib[MIN_BUFFER_TIME])
     format = 0;
-    
+
     if "Period" in get_tag_name(root[0].tag):
         child_period = root[0]
         FORMAT = 0
@@ -190,9 +190,9 @@ def read_mpd(mpd_file, dashplayback,bandwidth): # filename , empty class
                                         segment_info.attrib['timescale']))
                                     config_dash.LOG.debug("Segment Playback Duration = {}".format(video_segment_duration))
     elif FORMAT == 1: #differentFormat
-    
-    
-        track_num=0 
+
+
+        track_num=0
         init_mp4="" # initial_file
         # bandwidth = "high" #Jerry
         media_object = dashplayback.video
@@ -200,11 +200,11 @@ def read_mpd(mpd_file, dashplayback,bandwidth): # filename , empty class
         media_object[bandwidth].track_name = []
         media_object[bandwidth].track_size = []
         media_object[bandwidth].segment_sizes = []
-        
+
         for adaptation_set in child_period:
-  
+
             track_num+=1
-            
+
             if track_num==1:
                 init_mp4 = adaptation_set[0].attrib['initialization']
                 representation = adaptation_set[1]
@@ -233,13 +233,18 @@ def read_mpd(mpd_file, dashplayback,bandwidth): # filename , empty class
                     video_segment_duration = video_segment_duration = (float(segment_info.attrib['duration'])/float(
                                     segment_info.attrib['timescale']))
                     config_dash.LOG.debug("Segment Playback Duration = {}".format(video_segment_duration))
-                if 'video' in representation.attrib['mimeType']:                        
+                if 'video' in representation.attrib['mimeType']:
                     if "SegmentSize" in get_tag_name(segment_info.tag):
                         try:
                             segment_size = float(segment_info.attrib['size']) * float(
                             SIZE_DICT[segment_info.attrib['scale']])
                             seg_size.append(segment_size)
+                            if 'qp28_tile_dash_track1_' in  segment_info.attrib['id']:
+                                segment_info.attrib['id'] = segment_info.attrib['id'].replace('qp28','qp36')
+                            elif 'qp32_tile_dash_track1_' in  segment_info.attrib['id']:
+                                segment_info.attrib['id'] = segment_info.attrib['id'].replace('qp32','qp36')
                             seg_name.append(segment_info.attrib['id'])
+
                             # print(segment_info.attrib['id'])
                         except (KeyError, e):
                             config_dash.LOG.error("Error in reading Segment sizes :{}".format(e))
@@ -251,7 +256,7 @@ def read_mpd(mpd_file, dashplayback,bandwidth): # filename , empty class
         URL_SIZE_dict[bandwidth] = media_object[bandwidth].track_size
             # print(video_segment_duration)
             # break
-            
+
 
     else:
 
