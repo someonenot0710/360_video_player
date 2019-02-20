@@ -17,7 +17,7 @@ import read_mpd
 #import urlparse
 # from urllib.parse import urlparse
 # from urllib.parse import urljoin
-# import urllib
+import urllib
 # import urllib.error
 # import urllib.request
 import requests
@@ -718,6 +718,7 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
             #     if dash_player.do_request==True or segment<=config_dash.INITIAL_BUFFERING_COUNT:
             #         dash_player.do_request = False
             #         break
+            # print(sum(regular_size))
             if segment > config_dash.INITIAL_BUFFERING_COUNT and dash_player.playback_state =="PLAY":
                 dash_player.playback_timer.pause()
             start_time = timeit.default_timer()
@@ -725,6 +726,7 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
             if segment > config_dash.INITIAL_BUFFERING_COUNT and dash_player.playback_state =="PLAY":
                 dash_player.playback_timer.start()
 
+            # print("download_size: %f M "%(float(segment_size/1000000.0)))
             # config_dash.LOG.info("{}: Downloaded segment {}".format(playback_type.upper(), segment_url))
 
             # return None # Jerry
