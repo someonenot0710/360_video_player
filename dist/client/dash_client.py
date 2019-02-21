@@ -75,6 +75,7 @@ global_download_times = 0.0
 MODE = None
 PROTOCOL = None
 URGENT = None
+COMP = None
 gt_trace = dict()
 
 
@@ -583,7 +584,7 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
         ##
         print ("going to request segment_number ={}".format(segment_number))
 
-        if segment_number == dp_object.video[bitrate].start:
+        if segment_number == dp_object.video[bitrate].start or COMP=="y":
             current_bitrate = bitrates[0]
         else:
             if playback_type.upper() == "BASIC":
@@ -673,7 +674,7 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
          # patch_tile_url=dr_prediction_simple.get_request_tile(10,10,next_center)
          # patch_tile_url.sort()
 
-        if play_time_1 > 0.1 or dash_player.playback_state=="PLAY" :
+        if (play_time_1 > 0.1 or dash_player.playback_state=="PLAY") and COMP=="n":
             length = float(segment)-play_time_1
             now_time = dash_player.playback_timer.time_float()
             next_center , v_pre = dr_prediction_simple.dr_prediction(pre_time,now_time,v_pre,length)
@@ -830,6 +831,8 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
 
     total_request['final']=list()
     total_request['final'].append(str(config_dash.JSON_HANDLE['playback_info']['interruptions']))
+    avg_dow = "average IO time: %f"%(total_d_time/60.0)
+    total_request['final'].append(avg_dow)
     write_final_file(total_request,"total_request.txt")
     write_final_file(current_request,"current_request.txt")
 
@@ -991,6 +994,9 @@ def create_arguments(parser):
     parser.add_argument('-urgent', '--URGENT',
                         default="n",
                         help="urgent-->y no-->n")
+    parser.add_argument('-comp', '--COMP',
+                        default="n",
+                        help="compare QUIC and HTTP/2-->y no-->n")
 
 
 
