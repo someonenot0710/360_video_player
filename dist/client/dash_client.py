@@ -325,7 +325,7 @@ def get_patch_tile(player,media_list,media_size):
                 check_dir = "/home/jerry/Desktop/for_quic/"+str(seg_num)
                 tt = [name.split('/')[-1] for name in real_patch_url]
                 d_file_name=[]
-                while not set(tt).issubset(set(d_file_name)) and timeit.default_timer()-patch_start_time < period+0.1:
+                while not set(tt).issubset(set(d_file_name)) and timeit.default_timer()-patch_start_time < period+0.01:
                     d_file_name=[]
                     # d_regular = open("/home/jerry/Desktop/for_quic/log.txt")
                     d_regular = open(check_dir)
@@ -370,10 +370,13 @@ def get_patch_tile(player,media_list,media_size):
 
 
                 else:
-
+                    #if float(req_segment) >= 61.0:
+                    #    req_segment = 60
                     # print("download rate %f" %(global_segment_download_rate))
                     # p_time = float(round(play_time,1))
                     req_segment = int(math.floor(next_period+period))+1
+                    if req_segment > 60:
+                        continue
                     next_center , v_pre = dr_prediction_simple.dr_prediction(pre_time,p_time,v_pre)
                     patch_tile_url=dr_prediction_simple.get_request_tile(10,10,next_center)
                     patch_tile_url.sort()
@@ -585,7 +588,7 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
         print ("going to request segment_number ={}".format(segment_number))
 
         if segment_number == dp_object.video[bitrate].start or COMP=="y":
-            current_bitrate = bitrates[0]
+            current_bitrate = bitrates[2]
         else:
             if playback_type.upper() == "BASIC":
                 current_bitrate, average_dwn_time = basic_dash2.basic_dash2(segment_number, bitrates, average_dwn_time,
@@ -829,17 +832,21 @@ def start_playback_smart(dp_object, domain, playback_type=None, download=False, 
     if URGENT=="y":
         patch_thread.join() #Jerry
 
-    total_request['final']=list()
-    total_request['final'].append(str(config_dash.JSON_HANDLE['playback_info']['interruptions']))
-    avg_dow = "average IO time: %f"%(total_d_time/60.0)
-    total_request['final'].append(avg_dow)
+    total_request['61']=list()
+    avg_dow = total_d_time/60.0
+    total_request['61'].append(str(avg_dow))
+#    total_request['final'].append(str(config_dash.JSON_HANDLE['playback_info']['interruptions']))
+    total_request['61'].append(str(config_dash.JSON_HANDLE['playback_info']['interruptions']['count']))
+    total_request['61'].append(str(config_dash.JSON_HANDLE['playback_info']['interruptions']['total_duration']))
     write_final_file(total_request,"total_request.txt")
     write_final_file(current_request,"current_request.txt")
 
     # print(download_time_record[3])
 
-    print("average IO time: %f"%(total_d_time/60.0))
-    print(str(config_dash.JSON_HANDLE['playback_info']['interruptions']))
+#    print("average IO time: %f"%(total_d_time/60.0))
+#    print(str(config_dash.JSON_HANDLE['playback_info']['interruptions']))
+    print("rebuffer_count,rebuffer_duration,avg_download_time")
+    print("%s,%s,%s"%(str(config_dash.JSON_HANDLE['playback_info']['interruptions']['count']),str(config_dash.JSON_HANDLE['playback_info']['interruptions']['total_duration']),str(avg_dow)))
     if not download:
         clean_files(file_identifier)
 
@@ -1071,7 +1078,8 @@ def main():
 
     # read_mpd.read_mpd(mpd_file, dp_object) # just test
     # return None
-    mpd_dir = "mpd_new/"
+    #mpd_dir = "mpd_new/"
+    mpd_dir = "mpd_server/"
     mpd_28 = mpd_dir + mpd_file
     mpd_32 = mpd_dir+mpd_file.replace("28", "32");
     mpd_36 = mpd_dir+mpd_file.replace("28", "36");

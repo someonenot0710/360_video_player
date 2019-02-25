@@ -24,7 +24,8 @@ import os
 
 #### for SC_experiment
 FULL_BUFFER_SIZE = 3
-PREDICT_PERIOD = 0.5
+
+PREDICT_PERIOD = 0.2
 
 NOT_PATCH_SIZE=1
 INITIAL_BUFFERING_COUNT = 2  # original 1  initial_bufferrrrrr

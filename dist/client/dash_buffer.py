@@ -104,7 +104,7 @@ class DashPlayer:
 
             # If the playback encounters buffering during the playback
             if self.playback_state == "BUFFERING":
-                if not buffering:
+                if not buffering and self.playback_timer.time_float() < 60.0 :
                     print("in here?")
                     config_dash.LOG.info("Entering buffering stage after {} seconds of playback".format(
                         self.playback_timer.time()))

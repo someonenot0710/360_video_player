@@ -9,11 +9,15 @@
 #include <vector>
 #include <algorithm>
 #include <fstream>
+
 using namespace std;
 
+
 #define TIMETYPE curl_off_t
-//#define PROTO CURL_HTTP_VERSION_2_0
-#define PROTO CURL_HTTP_VERSION_1_1
+
+//#define PROTO CURL_HTTP_VERSION_1_1
+
+#define PROTO CURL_HTTP_VERSION_2_0
 
 vector<CURL *> row;
 vector<string> url_set;
@@ -72,6 +76,8 @@ int main(){
     printf("This libcurl does NOT have HTTP/2 support!\n");
   }
 
+//  cout<<"Now using "<<PROTO<<endl;
+
   // Create multi handle with multiplex over a single connection
   CURLM *multi_handle = curl_multi_init();
   curl_multi_setopt(multi_handle, CURLMOPT_MAX_HOST_CONNECTIONS, (long) 1L);
@@ -98,6 +104,7 @@ int main(){
     inFile.close();
 
     if (current_number != last_number && current_number!=0){
+      cout<<"regular"<<endl;
       std::ifstream inFile(check_dir);
       for (int lineno = 0; lineno < current_number; lineno++){
         getline (inFile,file_name);

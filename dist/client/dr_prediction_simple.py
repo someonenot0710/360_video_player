@@ -35,7 +35,7 @@ import timeit
 # In[225]:
 
 
-view_degree = 120.0
+view_degree = 110.0
 
 
 # In[226]:
