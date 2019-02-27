@@ -1,5 +1,3 @@
-# 360_video_player
+player
 
 This code is modified. 
-The original code is here [AStream](https://github.com/pari685/AStream)
-
